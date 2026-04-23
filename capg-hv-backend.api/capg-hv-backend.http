@@ -1,0 +1,6 @@
+@capg_hv_backend_HostAddress = http://localhost:5216
+
+GET {{capg_hv_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

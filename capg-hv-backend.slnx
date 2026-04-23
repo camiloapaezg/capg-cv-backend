@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="capg-hv-backend.tests/capg-hv-backend.tests.csproj" Id="6641e83b-b59f-4af6-833d-64f1497f49f1" />
+  <Project Path="capg-hv-backend.api/capg-hv-backend.api.csproj" />
+</Solution>
