@@ -95,6 +95,7 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
         {
             JobTitle = $"Software developer",
             Company = "Company",
+            Location = "Germany",
             Description = "Description",
             From = new DateTime(2018, 08, 01),
             Until = new DateTime(2026, 04, 21),

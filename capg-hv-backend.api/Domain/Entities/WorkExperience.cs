@@ -9,6 +9,9 @@ public sealed class WorkExperience : BaseEntity, ICloneable
     [MaxLength(255)]
     public string Company { get; set; } = null!;
 
+    [MaxLength(255)]
+    public string Location { get; set; } = null!;
+
     public string? ContactName { get; set; }
 
     [MaxLength(64)]
@@ -44,6 +47,7 @@ public sealed class WorkExperience : BaseEntity, ICloneable
             ContactName = ContactName,
             ContactNumber = ContactNumber,
             Description = Description,
+            Location = Location
         };
     }
 }

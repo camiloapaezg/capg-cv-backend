@@ -159,6 +159,7 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
             JobTitle = $"Job Title No {i + 1}",
             Description = "Description",
             Company = "Company",
+            Location = "Germany",
             From = new DateTime(2018, 08, 01),
             UserId = deleted.Id
         }).ToList();
