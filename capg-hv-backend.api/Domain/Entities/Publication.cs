@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace capg_hv_backend.Domain.Entities;
 
@@ -17,4 +18,9 @@ public sealed class Publication : BaseEntity
 
     [Required]
     public string Type { get; set; } = null!;
+
+    [ForeignKey("UserId")]
+    public Guid UserId { get; set; }
+
+    public User User { get; set; } = null!;
 }

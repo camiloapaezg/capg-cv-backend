@@ -11,7 +11,13 @@ public sealed class PersonalDetailsRepository(ApplicationDbContext context) : IR
 
     public async Task<PersonalDetails?> Create(PersonalDetails entity, CancellationToken token = default)
     {
-        var result = await _context.PersonalDetails.AddAsync(entity, token);
+        var details = (PersonalDetails)entity.Clone();
+        if (details.BirthDate.Kind != DateTimeKind.Utc)
+        {
+            details.BirthDate = details.BirthDate.ToUniversalTime();
+        }
+
+        var result = await _context.PersonalDetails.AddAsync(details, token);
         await _context.SaveChangesAsync(token);
 
         return result?.Entity;
@@ -25,7 +31,7 @@ public sealed class PersonalDetailsRepository(ApplicationDbContext context) : IR
             return null;
         }
 
-        _context.Entry(existing).State = EntityState.Deleted;
+        _context.PersonalDetails.Entry(existing).State = EntityState.Deleted;
         await _context.SaveChangesAsync(token);
 
         return existing;
@@ -43,7 +49,13 @@ public sealed class PersonalDetailsRepository(ApplicationDbContext context) : IR
             return null;
         }
 
-        _context.Entry(existing).CurrentValues.SetValues(entity);
+        var details = (PersonalDetails)entity.Clone();
+        if (details.BirthDate.Kind != DateTimeKind.Utc)
+        {
+            details.BirthDate = details.BirthDate.ToUniversalTime();
+        }
+
+        _context.PersonalDetails.Entry(existing).CurrentValues.SetValues(details);
         await _context.SaveChangesAsync(token);
 
         return entity;

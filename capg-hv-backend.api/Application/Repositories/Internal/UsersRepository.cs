@@ -25,7 +25,7 @@ public sealed class UsersRepository(ApplicationDbContext context) : IRepository<
             return null;
         }
 
-        _context.Entry(existing).State = EntityState.Deleted;
+        _context.Users.Entry(existing).State = EntityState.Deleted;
         await _context.SaveChangesAsync(token);
 
         return existing;
@@ -43,7 +43,7 @@ public sealed class UsersRepository(ApplicationDbContext context) : IRepository<
             return null;
         }
 
-        _context.Entry(existing).CurrentValues.SetValues(newUser);
+        _context.Users.Entry(existing).CurrentValues.SetValues(newUser);
         await _context.SaveChangesAsync(token);
 
         return newUser;

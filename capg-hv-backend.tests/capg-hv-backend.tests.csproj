@@ -30,11 +30,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Xunit" />
+    <ProjectReference Include="..\capg-hv-backend.api\capg-hv-backend.api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\capg-hv-backend\capg-hv-backend.api.csproj" />
+    <Using Include="Xunit" />
   </ItemGroup>
 
 </Project>

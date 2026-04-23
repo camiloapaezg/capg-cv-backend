@@ -6,11 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 namespace capg_hv_backend.tests.UnitTests;
 
 [Collection("Repositories collection")]
-public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
+public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
 {
     private readonly RepositoriesFixture _fixture = fixture;
 
-    private PersonalDetails? _personalDetails;
+    private FormalEducation? _formalEducation;
 
     private User? _user;
 
@@ -20,19 +20,19 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         // Prepares.
         await CreateTestEntities();
         Assert.NotNull(_user);
-        Assert.NotNull(_personalDetails);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        Assert.NotNull(_formalEducation);
+        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
 
         // Creates
-        var created = await sut.Create(_personalDetails);
+        var created = await sut.Create(_formalEducation);
         Assert.NotNull(created);
 
         // Asserts.
         var existing = await sut.Get(created.Id);
         Assert.NotNull(existing);
 
-        var all = await sut.List(_personalDetails.UserId);
+        var all = await sut.List(_formalEducation.UserId);
         Assert.Single(all);
     }
 
@@ -42,10 +42,10 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         // Prepares
         await CreateTestEntities();
         Assert.NotNull(_user);
-        Assert.NotNull(_personalDetails);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        Assert.NotNull(_formalEducation);
+        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
-        PersonalDetails? deleted = await sut.Create(_personalDetails);
+        FormalEducation? deleted = await sut.Create(_formalEducation);
         Assert.NotNull(deleted);
         deleted = await sut.Get(deleted.Id);
         Assert.NotNull(deleted);
@@ -65,10 +65,10 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         // Prepares
         await CreateTestEntities();
         Assert.NotNull(_user);
-        Assert.NotNull(_personalDetails);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        Assert.NotNull(_formalEducation);
+        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
-        PersonalDetails? updated = await sut.Create(_personalDetails);
+        FormalEducation? updated = await sut.Create(_formalEducation);
         Assert.NotNull(updated);
 
         // Updates.
@@ -76,14 +76,14 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(updated);
 
         var edit = "Edited";
-        updated.Nationality = new string(edit);
+        updated.Description = new string(edit);
         updated = await sut.Update(updated);
         Assert.NotNull(updated);
 
         // Asserts.
         var existing = await sut.Get(updated.Id);
         Assert.NotNull(existing);
-        Assert.Equal(edit, existing.Nationality);
+        Assert.Equal(edit, existing.Description);
     }
 
     private async Task CreateTestEntities()
@@ -91,12 +91,13 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         // Initializes entities
         var usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         _user = await usersRepo.Create(RepositoriesFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
-        _personalDetails = new PersonalDetails()
+        _formalEducation = new FormalEducation()
         {
             UserId = _user.Id,
-            Nationality = "Colombian",
-            TelephoneNumber = "123456789",
-            BirthDate = new DateTime(1988, 7, 3).ToUniversalTime()
+            Degree = "Degree",
+            School = "School",
+            StartDate = "2006.06",
+            EndDate = "2012.04"
         };
     }
 }

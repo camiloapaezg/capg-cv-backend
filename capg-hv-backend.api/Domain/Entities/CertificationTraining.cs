@@ -3,16 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace capg_hv_backend.Domain.Entities;
 
-public sealed class CertificationTraining : BaseEntity
+public sealed class CertificationTraining : BaseEntity, ICloneable
 {
-    [Required]
-    [MaxLength(64)]
-    public string Title { get; set; } = null!;
-
-    [Required]
-    [MaxLength(255)]
-    public string Institution { get; set; } = null!;
-
     [MaxLength(255)]
     public string? CertificateNumber { get; set; }
 
@@ -20,8 +12,29 @@ public sealed class CertificationTraining : BaseEntity
     [MaxLength(64)]
     public string FinishedAt { get; set; } = null!;
 
+    [Required]
+    [MaxLength(255)]
+    public string Institution { get; set; } = null!;
+
+    [Required]
+    [MaxLength(64)]
+    public string Title { get; set; } = null!;
+
+    public User User { get; set; } = null!;
+
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
 
-    public User User { get; set; } = null!;
+    public object Clone()
+    {
+        return new CertificationTraining()
+        {
+            Id = Id,
+            Title = Title,
+            Institution = Institution,
+            CertificateNumber = CertificateNumber,
+            FinishedAt = FinishedAt,
+            UserId = UserId,
+        };
+    }
 }
