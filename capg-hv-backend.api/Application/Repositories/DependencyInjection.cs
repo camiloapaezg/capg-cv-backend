@@ -10,8 +10,11 @@ public static class DependencyInjection
     {
         services.AddTransient<IRepository<User>, UsersRepository>();
         services.AddTransient<IRepository<PersonalDetails>, PersonalDetailsRepository>();
+        services.AddTransient<IRepository<GeneralDetails>, GeneralDetailsRepository>();
         services.AddTransient<IRepository<CertificationTraining>, CertificationTrainingRepository>();
         services.AddTransient<IRepository<FormalEducation>, FormalEducationRepository>();
+        services.AddTransient<IRepository<Publication>, PublicationRepository>();
+        services.AddTransient<IRepository<WorkExperience>, WorkExperienceRepository>();
 
         return services;
     }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace capg_hv_backend.Domain.Entities;
 
-public sealed class Publication : BaseEntity
+public sealed class Publication : BaseEntity, ICloneable
 {
     public string? Doi { get; set; }
 
@@ -19,8 +19,22 @@ public sealed class Publication : BaseEntity
     [Required]
     public string Type { get; set; } = null!;
 
+    public User User { get; set; } = null!;
+
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
 
-    public User User { get; set; } = null!;
+    public object Clone()
+    {
+        return new Publication()
+        {
+            Id = Id,
+            UserId = UserId,
+            Title = Title,
+            Type = Type,
+            PublishedAt = PublishedAt,
+            Doi = Doi,
+            Location = Location,
+        };
+    }
 }
