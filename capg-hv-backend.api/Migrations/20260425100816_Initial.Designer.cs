@@ -12,15 +12,15 @@ using capg_hv_backend.Application.Persistence.Internal;
 namespace capg_hv_backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260422065244_Init")]
-    partial class Init
+    [Migration("20260425100816_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.6")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -88,7 +88,7 @@ namespace capg_hv_backend.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -185,7 +185,7 @@ namespace capg_hv_backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -233,7 +233,8 @@ namespace capg_hv_backend.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("ContactName")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ContactNumber")
                         .HasMaxLength(64)
@@ -250,6 +251,11 @@ namespace capg_hv_backend.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime?>("Until")
                         .HasColumnType("timestamp with time zone");
@@ -277,9 +283,13 @@ namespace capg_hv_backend.Migrations
 
             modelBuilder.Entity("capg_hv_backend.Domain.Entities.FormalEducation", b =>
                 {
-                    b.HasOne("capg_hv_backend.Domain.Entities.User", null)
+                    b.HasOne("capg_hv_backend.Domain.Entities.User", "User")
                         .WithMany("Education")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("capg_hv_backend.Domain.Entities.GeneralDetails", b =>
@@ -306,9 +316,13 @@ namespace capg_hv_backend.Migrations
 
             modelBuilder.Entity("capg_hv_backend.Domain.Entities.Publication", b =>
                 {
-                    b.HasOne("capg_hv_backend.Domain.Entities.User", null)
+                    b.HasOne("capg_hv_backend.Domain.Entities.User", "User")
                         .WithMany("Publications")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("capg_hv_backend.Domain.Entities.WorkExperience", b =>

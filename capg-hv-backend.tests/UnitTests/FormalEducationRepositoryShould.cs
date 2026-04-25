@@ -21,18 +21,18 @@ public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_formalEducation);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
+        IRepository<FormalEducation> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
 
         // Creates
-        var created = await sut.Create(_formalEducation);
+        FormalEducation? created = await sut.Create(_formalEducation);
         Assert.NotNull(created);
 
         // Asserts.
-        var existing = await sut.Get(created.Id);
-        Assert.NotNull(existing);
+        bool exists = await sut.Exists(created.Id);
+        Assert.True(exists);
 
-        var all = await sut.List(_formalEducation.UserId);
+        List<FormalEducation> all = await sut.List(_formalEducation.UserId);
         Assert.Single(all);
     }
 
@@ -43,7 +43,7 @@ public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_formalEducation);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
+        IRepository<FormalEducation> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
         FormalEducation? deleted = await sut.Create(_formalEducation);
         Assert.NotNull(deleted);
@@ -55,8 +55,8 @@ public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(deleted);
 
         // Asserts
-        deleted = await sut.Get(deleted.Id);
-        Assert.Null(deleted);
+        bool exists = await sut.Exists(deleted.Id);
+        Assert.False(exists);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_formalEducation);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
+        IRepository<FormalEducation> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
         FormalEducation? updated = await sut.Create(_formalEducation);
         Assert.NotNull(updated);
@@ -75,13 +75,13 @@ public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
         updated = await sut.Get(updated.Id);
         Assert.NotNull(updated);
 
-        var edit = "Edited";
+        string edit = "Edited";
         updated.Description = new string(edit);
         updated = await sut.Update(updated);
         Assert.NotNull(updated);
 
         // Asserts.
-        var existing = await sut.Get(updated.Id);
+        FormalEducation? existing = await sut.Get(updated.Id);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Description);
     }
@@ -89,7 +89,7 @@ public class FormalEducationRepositoryShould(RepositoriesFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        var usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         _user = await usersRepo.Create(RepositoriesFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _formalEducation = new FormalEducation()
         {

@@ -2,6 +2,7 @@
 using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
@@ -11,7 +12,7 @@ public sealed class CertificationTrainingRepository(ApplicationDbContext context
 
     public async Task<CertificationTraining?> Create(CertificationTraining entity, CancellationToken token = default)
     {
-        var result = await _context.CertificationTraining.AddAsync(entity, token);
+        EntityEntry<CertificationTraining> result = await _context.CertificationTraining.AddAsync(entity, token);
         await _context.SaveChangesAsync(token);
 
         return result?.Entity;
@@ -19,7 +20,7 @@ public sealed class CertificationTrainingRepository(ApplicationDbContext context
 
     public async Task<CertificationTraining?> Delete(Guid id, CancellationToken token = default)
     {
-        var existing = await Get(id, token);
+        CertificationTraining? existing = await Get(id, token);
         if (existing is null)
         {
             return null;
@@ -31,13 +32,15 @@ public sealed class CertificationTrainingRepository(ApplicationDbContext context
         return existing;
     }
 
+    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.CertificationTraining.AnyAsync(e => e.Id == id, token);
+
     public async Task<CertificationTraining?> Get(Guid id, CancellationToken token = default) => await _context.CertificationTraining.FindAsync([id], token);
 
     public async Task<List<CertificationTraining>> List(Guid? userId = null) => await _context.CertificationTraining.Where(i => i.UserId == userId).ToListAsync();
 
     public async Task<CertificationTraining?> Update(CertificationTraining entity, CancellationToken token = default)
     {
-        var existing = await Get(entity.Id, token);
+        CertificationTraining? existing = await Get(entity.Id, token);
         if (existing is null)
         {
             return null;

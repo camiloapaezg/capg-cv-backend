@@ -17,7 +17,7 @@ namespace capg_hv_backend.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.6")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -230,7 +230,8 @@ namespace capg_hv_backend.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("ContactName")
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ContactNumber")
                         .HasMaxLength(64)

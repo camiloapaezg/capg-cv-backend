@@ -21,18 +21,18 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_experience);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
+        IRepository<WorkExperience> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
         Assert.NotNull(sut);
 
         // Creates
-        var created = await sut.Create(_experience);
+        WorkExperience? created = await sut.Create(_experience);
         Assert.NotNull(created);
 
         // Asserts.
-        var existing = await sut.Get(created.Id);
-        Assert.NotNull(existing);
+        bool exists = await sut.Exists(created.Id);
+        Assert.True(exists);
 
-        var all = await sut.List(_experience.UserId);
+        List<WorkExperience> all = await sut.List(_experience.UserId);
         Assert.Single(all);
     }
 
@@ -43,7 +43,7 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_experience);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
+        IRepository<WorkExperience> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
         Assert.NotNull(sut);
         WorkExperience? deleted = await sut.Create(_experience);
         Assert.NotNull(deleted);
@@ -55,8 +55,8 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(deleted);
 
         // Asserts
-        deleted = await sut.Get(deleted.Id);
-        Assert.Null(deleted);
+        bool exists = await sut.Exists(deleted.Id);
+        Assert.False(exists);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_experience);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
+        IRepository<WorkExperience> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
         Assert.NotNull(sut);
         WorkExperience? updated = await sut.Create(_experience);
         Assert.NotNull(updated);
@@ -75,13 +75,13 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
         updated = await sut.Get(updated.Id);
         Assert.NotNull(updated);
 
-        var edit = DateTime.UtcNow;
+        DateTime edit = DateTime.UtcNow;
         updated.Until = new DateTime(edit.Ticks, DateTimeKind.Utc);
         updated = await sut.Update(updated);
         Assert.NotNull(updated);
 
         // Asserts.
-        var existing = await sut.Get(updated.Id);
+        WorkExperience? existing = await sut.Get(updated.Id);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Until!.Value);
     }
@@ -89,7 +89,7 @@ public class WorkExperienceRepositoryShould(RepositoriesFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        var usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         _user = await usersRepo.Create(RepositoriesFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _experience = new WorkExperience()
         {

@@ -12,6 +12,7 @@ public sealed class GeneralDetails : BaseEntity, ICloneable
 
     public string? TechnicalSkills { get; set; }
 
+    [Required]
     [MaxLength(64)]
     public string Title { get; set; } = null!;
 

@@ -14,26 +14,26 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
     public async Task CreateEntity()
     {
         // Prepares.
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         Assert.NotNull(sut);
 
         // Creates
-        var created = await sut.Create(RepositoriesFixture.DefaultUser);
+        User? created = await sut.Create(RepositoriesFixture.DefaultUser);
         Assert.NotNull(created);
 
         // Asserts.
-        var existing = await sut.Get(created.Id);
-        Assert.NotNull(existing);
+        bool exists = await sut.Exists(created.Id);
+        Assert.True(exists);
 
-        var all = await sut.List();
-        Assert.Contains(existing, all);
+        List<User> all = await sut.List();
+        Assert.Contains(created, all);
     }
 
     [Fact]
     public async Task DeleteEntity()
     {
         // Prepares
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         Assert.NotNull(sut);
         User? deleted = await sut.Create(RepositoriesFixture.DefaultUser);
         Assert.NotNull(deleted);
@@ -45,37 +45,35 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(deleted);
 
         // Asserts
-        deleted = await sut.Get(deleted.Id);
-        Assert.Null(deleted);
+        bool exists = await sut.Exists(deleted.Id);
+        Assert.False(exists);
     }
 
     [Fact]
     public async Task DeleteEntityInCascade()
     {
         // Prepares
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         Assert.NotNull(sut);
-        var personalDetailsRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        IRepository<PersonalDetails> personalDetailsRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
         Assert.NotNull(personalDetailsRepo);
-        var generalDetailsRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
+        IRepository<GeneralDetails> generalDetailsRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
         Assert.NotNull(generalDetailsRepo);
-        var certificatesRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
+        IRepository<CertificationTraining> certificatesRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
         Assert.NotNull(certificatesRepo);
-        var educationRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
+        IRepository<FormalEducation> educationRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(educationRepo);
-        var publicationsRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
+        IRepository<Publication> publicationsRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
         Assert.NotNull(publicationsRepo);
-        var experienceRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
+        IRepository<WorkExperience> experienceRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
         Assert.NotNull(experienceRepo);
 
         // Creates User
         User? deleted = await sut.Create(RepositoriesFixture.DefaultUser);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
-        Assert.NotNull(deleted);
 
         // Creates Personal details
-        var personalDetails = new PersonalDetails()
+        PersonalDetails? personalDetails = new()
         {
             UserId = deleted.Id,
             Nationality = "Colombian",
@@ -87,7 +85,7 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(personalDetails);
 
         // Creates general details
-        var generalDetails = new GeneralDetails()
+        GeneralDetails? generalDetails = new()
         {
             UserId = deleted.Id,
             Title = "General Details"
@@ -97,44 +95,44 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(generalDetails);
 
         // Creates Formal education
-        var formalEducation = Enumerable.Range(0, 5).Select(i => new FormalEducation()
+        List<FormalEducation> formalEducation = [.. Enumerable.Range(0, 5).Select(i => new FormalEducation()
         {
             Degree = $"Degree No {i + 1}",
             School = "School",
             StartDate = "2026.04",
             EndDate = "2026.04",
             UserId = deleted.Id
-        }).ToList();
+        })];
 
-        foreach (var item in formalEducation)
+        foreach (FormalEducation? item in formalEducation)
         {
-            var education = await educationRepo.Create(item);
+            FormalEducation? education = await educationRepo.Create(item);
             Assert.NotNull(education);
         }
 
-        var savedEducation = await educationRepo.List(deleted.Id);
+        List<FormalEducation> savedEducation = await educationRepo.List(deleted.Id);
         Assert.Equal(formalEducation.Count, savedEducation.Count);
 
         // Creates Certifications
-        var certificates = Enumerable.Range(0, 5).Select(i => new CertificationTraining()
+        List<CertificationTraining> certificates = [.. Enumerable.Range(0, 5).Select(i => new CertificationTraining()
         {
             Title = $"Certificate No {i + 1}",
             Institution = "Certificate Institution",
             FinishedAt = "2026.04",
             UserId = deleted.Id
-        }).ToList();
+        })];
 
-        foreach (var item in certificates)
+        foreach (CertificationTraining? item in certificates)
         {
-            var certification = await certificatesRepo.Create(item);
+            CertificationTraining? certification = await certificatesRepo.Create(item);
             Assert.NotNull(certification);
         }
 
-        var savedCertificates = await certificatesRepo.List(deleted.Id);
+        List<CertificationTraining> savedCertificates = await certificatesRepo.List(deleted.Id);
         Assert.Equal(certificates.Count, savedCertificates.Count);
 
         // Creates Publications
-        var publications = Enumerable.Range(0, 5).Select(i => new Publication()
+        List<Publication> publications = [.. Enumerable.Range(0, 5).Select(i => new Publication()
         {
             Title = $"Publication No {i + 1}",
             Type = "Article",
@@ -142,19 +140,19 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
             Doi = "123456789",
             Location = "Germany",
             UserId = deleted.Id
-        }).ToList();
+        })];
 
-        foreach (var item in publications)
+        foreach (Publication? item in publications)
         {
-            var publication = await publicationsRepo.Create(item);
+            Publication? publication = await publicationsRepo.Create(item);
             Assert.NotNull(publication);
         }
 
-        var savedPublications = await publicationsRepo.List(deleted.Id);
+        List<Publication> savedPublications = await publicationsRepo.List(deleted.Id);
         Assert.Equal(publications.Count, savedPublications.Count);
 
         // Creates work experience
-        var workExperience = Enumerable.Range(0, 5).Select(i => new WorkExperience()
+        List<WorkExperience> workExperience = [.. Enumerable.Range(0, 5).Select(i => new WorkExperience()
         {
             JobTitle = $"Job Title No {i + 1}",
             Description = "Description",
@@ -162,15 +160,15 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
             Location = "Germany",
             From = new DateTime(2018, 08, 01),
             UserId = deleted.Id
-        }).ToList();
+        })];
 
-        foreach (var item in workExperience)
+        foreach (WorkExperience? item in workExperience)
         {
-            var experience = await experienceRepo.Create(item);
+            WorkExperience? experience = await experienceRepo.Create(item);
             Assert.NotNull(experience);
         }
 
-        var savedWorkExperience = await experienceRepo.List(deleted.Id);
+        List<WorkExperience> savedWorkExperience = await experienceRepo.List(deleted.Id);
         Assert.Equal(workExperience.Count, savedWorkExperience.Count);
 
         // Deletes
@@ -204,7 +202,7 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
     public async Task UpdateEntity()
     {
         // Prepares
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         Assert.NotNull(sut);
         User? updated = await sut.Create(RepositoriesFixture.DefaultUser);
         Assert.NotNull(updated);
@@ -213,13 +211,13 @@ public class UsersRepositoryShould(RepositoriesFixture fixture)
         updated = await sut.Get(updated.Id);
         Assert.NotNull(updated);
 
-        var edit = "Edited";
+        string edit = "Edited";
         updated.LastName = new string(edit);
         updated = await sut.Update(updated);
         Assert.NotNull(updated);
 
         // Asserts.
-        var existing = await sut.Get(updated.Id);
+        User? existing = await sut.Get(updated.Id);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.LastName);
     }

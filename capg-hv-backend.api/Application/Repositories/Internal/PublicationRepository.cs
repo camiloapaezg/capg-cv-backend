@@ -2,6 +2,7 @@
 using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
@@ -11,7 +12,7 @@ public sealed class PublicationRepository(ApplicationDbContext context) : IRepos
 
     public async Task<Publication?> Create(Publication entity, CancellationToken token = default)
     {
-        var result = await _context.Publications.AddAsync(entity, token);
+        EntityEntry<Publication> result = await _context.Publications.AddAsync(entity, token);
         await _context.SaveChangesAsync(token);
 
         return result?.Entity;
@@ -19,7 +20,7 @@ public sealed class PublicationRepository(ApplicationDbContext context) : IRepos
 
     public async Task<Publication?> Delete(Guid id, CancellationToken token = default)
     {
-        var existing = await Get(id, token);
+        Publication? existing = await Get(id, token);
         if (existing is null)
         {
             return null;
@@ -31,13 +32,15 @@ public sealed class PublicationRepository(ApplicationDbContext context) : IRepos
         return existing;
     }
 
+    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.Publications.AnyAsync(e => e.Id == id, token);
+
     public async Task<Publication?> Get(Guid id, CancellationToken token = default) => await _context.Publications.FindAsync([id], token);
 
     public async Task<List<Publication>> List(Guid? userId = null) => await _context.Publications.Where(i => i.UserId == userId).ToListAsync();
 
     public async Task<Publication?> Update(Publication entity, CancellationToken token = default)
     {
-        var existing = await Get(entity.Id, token);
+        Publication? existing = await Get(entity.Id, token);
         if (existing is null)
         {
             return null;

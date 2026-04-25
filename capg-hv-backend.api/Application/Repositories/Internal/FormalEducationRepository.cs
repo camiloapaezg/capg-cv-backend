@@ -2,6 +2,7 @@
 using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
@@ -11,7 +12,7 @@ public sealed class FormalEducationRepository(ApplicationDbContext context) : IR
 
     public async Task<FormalEducation?> Create(FormalEducation entity, CancellationToken token = default)
     {
-        var result = await _context.FormalEducation.AddAsync(entity, token);
+        EntityEntry<FormalEducation> result = await _context.FormalEducation.AddAsync(entity, token);
         await _context.SaveChangesAsync(token);
 
         return result?.Entity;
@@ -19,7 +20,7 @@ public sealed class FormalEducationRepository(ApplicationDbContext context) : IR
 
     public async Task<FormalEducation?> Delete(Guid id, CancellationToken token = default)
     {
-        var existing = await Get(id, token);
+        FormalEducation? existing = await Get(id, token);
         if (existing is null)
         {
             return null;
@@ -31,13 +32,15 @@ public sealed class FormalEducationRepository(ApplicationDbContext context) : IR
         return existing;
     }
 
+    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.FormalEducation.AnyAsync(e => e.Id == id, token);
+
     public async Task<FormalEducation?> Get(Guid id, CancellationToken token = default) => await _context.FormalEducation.FindAsync([id], token);
 
     public async Task<List<FormalEducation>> List(Guid? userId = null) => await _context.FormalEducation.Where(i => i.UserId == userId).ToListAsync();
 
     public async Task<FormalEducation?> Update(FormalEducation entity, CancellationToken token = default)
     {
-        var existing = await Get(entity.Id, token);
+        FormalEducation? existing = await Get(entity.Id, token);
         if (existing is null)
         {
             return null;

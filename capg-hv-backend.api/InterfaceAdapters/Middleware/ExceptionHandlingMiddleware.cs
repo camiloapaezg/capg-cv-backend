@@ -2,8 +2,10 @@
 
 namespace capg_hv_backend.InterfaceAdapters.Middleware;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next)
+public class ExceptionHandlingMiddleware(RequestDelegate next, IWebHostEnvironment env)
 {
+    private readonly IWebHostEnvironment _env = env;
+
     private readonly RequestDelegate _next = next;
 
     public async Task InvokeAsync(HttpContext httpContext)
@@ -12,17 +14,28 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
         {
             await _next(httpContext);
         }
+        catch (ArgumentNullException)
+        {
+            await httpContext.HandleExceptionAsync(HttpStatusCode.BadRequest, "Missing required parameter.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await httpContext.HandleExceptionAsync(HttpStatusCode.Unauthorized, "Access denied.");
+        }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(httpContext, ex);
+            var message = "An unexpected error ocurred";
+            var details = _env.IsDevelopment() ? $"Exception '{ex.Source}' thrown: {ex.Message}. {ex.StackTrace}" : null;
+            await httpContext.HandleExceptionAsync(HttpStatusCode.InternalServerError, message, details);
         }
     }
+}
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception ex)
+public static class ExceptionHandlingMiddlewareExtensions
+{
+    public static IApplicationBuilder UseCustomExceptionHandler(
+        this IApplicationBuilder builder)
     {
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-        context.Response.ContentType = "application/json";
-        var result = new { message = $"Exception '{ex.Source}' thrown: {ex.Message}" };
-        return context.Response.WriteAsJsonAsync(result);
+        return builder.UseMiddleware<ExceptionHandlingMiddleware>();
     }
 }

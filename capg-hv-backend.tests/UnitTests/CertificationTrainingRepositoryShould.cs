@@ -21,18 +21,18 @@ public class CertificationTrainingRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_certification);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
+        IRepository<CertificationTraining> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
         Assert.NotNull(sut);
 
         // Creates
-        var created = await sut.Create(_certification);
+        CertificationTraining? created = await sut.Create(_certification);
         Assert.NotNull(created);
 
         // Asserts.
-        var existing = await sut.Get(created.Id);
-        Assert.NotNull(existing);
+        bool exists = await sut.Exists(created.Id);
+        Assert.True(exists);
 
-        var all = await sut.List(_certification.UserId);
+        List<CertificationTraining> all = await sut.List(_certification.UserId);
         Assert.Single(all);
     }
 
@@ -43,7 +43,7 @@ public class CertificationTrainingRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_certification);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
+        IRepository<CertificationTraining> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
         Assert.NotNull(sut);
         CertificationTraining? deleted = await sut.Create(_certification);
         Assert.NotNull(deleted);
@@ -55,8 +55,8 @@ public class CertificationTrainingRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(deleted);
 
         // Asserts
-        deleted = await sut.Get(deleted.Id);
-        Assert.Null(deleted);
+        bool exists = await sut.Exists(deleted.Id);
+        Assert.False(exists);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class CertificationTrainingRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_certification);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
+        IRepository<CertificationTraining> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
         Assert.NotNull(sut);
         CertificationTraining? updated = await sut.Create(_certification);
         Assert.NotNull(updated);
@@ -75,13 +75,13 @@ public class CertificationTrainingRepositoryShould(RepositoriesFixture fixture)
         updated = await sut.Get(updated.Id);
         Assert.NotNull(updated);
 
-        var edit = "Edited";
+        string edit = "Edited";
         updated.Institution = new string(edit);
         updated = await sut.Update(updated);
         Assert.NotNull(updated);
 
         // Asserts.
-        var existing = await sut.Get(updated.Id);
+        CertificationTraining? existing = await sut.Get(updated.Id);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Institution);
     }
@@ -89,7 +89,7 @@ public class CertificationTrainingRepositoryShould(RepositoriesFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        var usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         _user = await usersRepo.Create(RepositoriesFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _certification = new CertificationTraining()
         {

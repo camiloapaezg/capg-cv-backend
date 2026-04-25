@@ -11,7 +11,7 @@ public sealed class WorkExperience : BaseEntity, ICloneable
 
     [MaxLength(255)]
     public string Location { get; set; } = null!;
-
+    [MaxLength(255)]
     public string? ContactName { get; set; }
 
     [MaxLength(64)]

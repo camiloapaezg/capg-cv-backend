@@ -21,18 +21,18 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_personalDetails);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        IRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
         Assert.NotNull(sut);
 
         // Creates
-        var created = await sut.Create(_personalDetails);
+        PersonalDetails? created = await sut.Create(_personalDetails);
         Assert.NotNull(created);
 
         // Asserts.
-        var existing = await sut.Get(created.Id);
-        Assert.NotNull(existing);
+        bool exists = await sut.Exists(created.Id);
+        Assert.True(exists);
 
-        var all = await sut.List(_personalDetails.UserId);
+        List<PersonalDetails> all = await sut.List(_personalDetails.UserId);
         Assert.Single(all);
     }
 
@@ -43,7 +43,7 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_personalDetails);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        IRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
         Assert.NotNull(sut);
         PersonalDetails? deleted = await sut.Create(_personalDetails);
         Assert.NotNull(deleted);
@@ -55,8 +55,8 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         Assert.NotNull(deleted);
 
         // Asserts
-        deleted = await sut.Get(deleted.Id);
-        Assert.Null(deleted);
+        bool exists = await sut.Exists(deleted.Id);
+        Assert.False(exists);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_personalDetails);
-        var sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        IRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
         Assert.NotNull(sut);
         PersonalDetails? updated = await sut.Create(_personalDetails);
         Assert.NotNull(updated);
@@ -75,13 +75,13 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
         updated = await sut.Get(updated.Id);
         Assert.NotNull(updated);
 
-        var edit = "Edited";
+        string edit = "Edited";
         updated.Nationality = new string(edit);
         updated = await sut.Update(updated);
         Assert.NotNull(updated);
 
         // Asserts.
-        var existing = await sut.Get(updated.Id);
+        PersonalDetails? existing = await sut.Get(updated.Id);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Nationality);
     }
@@ -89,7 +89,7 @@ public class PersonalDetailsRepositoryShould(RepositoriesFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        var usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
+        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         _user = await usersRepo.Create(RepositoriesFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _personalDetails = new PersonalDetails()
         {

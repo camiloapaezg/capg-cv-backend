@@ -2,6 +2,7 @@
 using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
@@ -11,7 +12,7 @@ public sealed class WorkExperienceRepository(ApplicationDbContext context) : IRe
 
     public async Task<WorkExperience?> Create(WorkExperience entity, CancellationToken token = default)
     {
-        var experience = (WorkExperience)entity.Clone();
+        WorkExperience experience = (WorkExperience)entity.Clone();
         if (experience.From.Kind != DateTimeKind.Utc)
         {
             experience.From = experience.From.ToUniversalTime();
@@ -22,7 +23,7 @@ public sealed class WorkExperienceRepository(ApplicationDbContext context) : IRe
             experience.Until = experience.Until.Value.ToUniversalTime();
         }
 
-        var result = await _context.WorkExperience.AddAsync(experience, token);
+        EntityEntry<WorkExperience> result = await _context.WorkExperience.AddAsync(experience, token);
         await _context.SaveChangesAsync(token);
 
         return result?.Entity;
@@ -30,7 +31,7 @@ public sealed class WorkExperienceRepository(ApplicationDbContext context) : IRe
 
     public async Task<WorkExperience?> Delete(Guid id, CancellationToken token = default)
     {
-        var existing = await Get(id, token);
+        WorkExperience? existing = await Get(id, token);
         if (existing is null)
         {
             return null;
@@ -42,19 +43,21 @@ public sealed class WorkExperienceRepository(ApplicationDbContext context) : IRe
         return existing;
     }
 
+    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.WorkExperience.AnyAsync(e => e.Id == id, token);
+
     public async Task<WorkExperience?> Get(Guid id, CancellationToken token = default) => await _context.WorkExperience.FindAsync([id], token);
 
     public async Task<List<WorkExperience>> List(Guid? userId = null) => await _context.WorkExperience.Where(i => i.UserId == userId).ToListAsync();
 
     public async Task<WorkExperience?> Update(WorkExperience entity, CancellationToken token = default)
     {
-        var existing = await Get(entity.Id, token);
+        WorkExperience? existing = await Get(entity.Id, token);
         if (existing is null)
         {
             return null;
         }
 
-        var experience = (WorkExperience)entity.Clone();
+        WorkExperience experience = (WorkExperience)entity.Clone();
         if (experience.From.Kind != DateTimeKind.Utc)
         {
             experience.From = experience.From.ToUniversalTime();

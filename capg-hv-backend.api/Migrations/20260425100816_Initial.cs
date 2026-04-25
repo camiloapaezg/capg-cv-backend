@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace capg_hv_backend.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,10 +30,10 @@ namespace capg_hv_backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    Institution = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     CertificateNumber = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     FinishedAt = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Institution = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Title = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -52,12 +52,12 @@ namespace capg_hv_backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    School = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Degree = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    StartDate = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    EndDate = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: true)
+                    EndDate = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    School = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    StartDate = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -66,7 +66,8 @@ namespace capg_hv_backend.Migrations
                         name: "FK_FormalEducation_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -74,10 +75,10 @@ namespace capg_hv_backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Description = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    TechnicalSkills = table.Column<string>(type: "text", nullable: true),
                     Languages = table.Column<string>(type: "text", nullable: true),
+                    TechnicalSkills = table.Column<string>(type: "text", nullable: true),
+                    Title = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -96,9 +97,9 @@ namespace capg_hv_backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Nationality = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     TelephoneNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -122,7 +123,7 @@ namespace capg_hv_backend.Migrations
                     PublishedAt = table.Column<string>(type: "text", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: true)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -131,7 +132,8 @@ namespace capg_hv_backend.Migrations
                         name: "FK_Publications_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -139,13 +141,14 @@ namespace capg_hv_backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    JobTitle = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Company = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    ContactName = table.Column<string>(type: "text", nullable: true),
+                    Location = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    ContactName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     ContactNumber = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    From = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    JobTitle = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
