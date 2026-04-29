@@ -33,7 +33,7 @@ public class RepositoriesFixture : IAsyncLifetime
 
     public static IHost CreateHost()
     {
-        var builder = Host.CreateDefaultBuilder([])
+        IHostBuilder builder = Host.CreateDefaultBuilder([])
                 .ConfigureAppConfiguration((context, builder) =>
                 {
                     builder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
@@ -51,15 +51,15 @@ public class RepositoriesFixture : IAsyncLifetime
     public virtual async Task DisposeAsync()
     {
         // Deletes the database.
-        using var scope = TestHost.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        using IServiceScope scope = TestHost.Services.CreateScope();
+        ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await dbContext.Database.EnsureDeletedAsync();
     }
 
     public virtual async Task InitializeAsync()
     {
-        using var scope = TestHost.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        using IServiceScope scope = TestHost.Services.CreateScope();
+        ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await dbContext.Database.MigrateAsync();
     }
 }

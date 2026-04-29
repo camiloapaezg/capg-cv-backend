@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace capg_hv_backend.Domain.Entities;
 
@@ -16,6 +17,7 @@ public sealed class GeneralDetails : BaseEntity, ICloneable
     [MaxLength(64)]
     public string Title { get; set; } = null!;
 
+    [JsonIgnore]
     public User User { get; set; } = null!;
 
     [ForeignKey("UserId")]

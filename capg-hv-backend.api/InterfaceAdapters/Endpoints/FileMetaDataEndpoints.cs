@@ -8,24 +8,24 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace capg_hv_backend.InterfaceAdapters.Endpoints;
 
-public sealed class GeneralDetailsEndpoints : ICarterModule
+public sealed class FileMetaDataEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/general")
-            .WithTags("General Details");
+        RouteGroupBuilder group = app.MapGroup("api/v1/files")
+            .WithTags("Files Metadata");
 
         group.MapGet("/", GetAll)
-            .Produces<List<GeneralDetails>>()
+            .Produces<List<FileMetaData>>()
             .Produces(StatusCodes.Status500InternalServerError);
 
         group.MapGet("{id:guid}", Get)
-            .Produces<GeneralDetails>()
+            .Produces<FileMetaData>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
 
         group.MapPost("/", Create)
-            .Produces<GeneralDetails>()
+            .Produces<FileMetaData>()
             .Produces(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status422UnprocessableEntity)
@@ -44,11 +44,9 @@ public sealed class GeneralDetailsEndpoints : ICarterModule
     }
 
     private async Task<IResult> Create(
-        Guid userId,
-        GeneralDetailsAddValidator validator,
-        [FromBody] GeneralDetails entity,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<GeneralDetails> generalDetailsRepo)
+        FileMetaDataAddValidator validator,
+        [FromBody] FileMetaData entity,
+        [FromServices] IRepository<FileMetaData> repository)
     {
         ValidationResult validationResult = validator.Validate(entity);
         if (!validationResult.IsValid)
@@ -56,58 +54,29 @@ public sealed class GeneralDetailsEndpoints : ICarterModule
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
-        {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
-        }
-
-        GeneralDetails newEntity = (GeneralDetails)entity.Clone();
-        newEntity.UserId = userId;
-
-        GeneralDetails? result = await generalDetailsRepo.Create(newEntity);
+        FileMetaData? result = await repository.Create(entity);
         if (result is null)
         {
             return Results.Problem("Error creating entity.", statusCode: 500);
         }
 
-        return Results.Created($"api/v1/users/{userId}/general/{result.Id}", result);
+        return Results.Created($"api/v1/files/{result.Id}", result);
     }
 
-    private async Task<IResult> Delete(
-        Guid userId,
-        Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<GeneralDetails> generalDetailsRepo)
+    private async Task<IResult> Delete(Guid id, [FromServices] IRepository<FileMetaData> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
-        {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
-        }
-
-        GeneralDetails? result = await generalDetailsRepo.Delete(id);
+        FileMetaData? result = await repository.Delete(id);
         if (result is null)
         {
-            return Results.BadRequest($"Error deleting entity with Id '{id}'");
+            return Results.BadRequest($"Error deleting the entity with Id '{id}'");
         }
 
         return Results.NoContent();
     }
 
-    private async Task<IResult> Get(
-        Guid userId,
-        Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<GeneralDetails> generalDetailsRepo)
+    private async Task<IResult> Get(Guid id, [FromServices] IRepository<FileMetaData> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
-        {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
-        }
-
-        GeneralDetails? result = await generalDetailsRepo.Get(id);
+        FileMetaData? result = await repository.Get(id);
         if (result is null)
         {
             return Results.BadRequest("The entity does not exist in the database.");
@@ -116,20 +85,17 @@ public sealed class GeneralDetailsEndpoints : ICarterModule
         return Results.Ok(result);
     }
 
-    private async Task<IResult> GetAll(
-        Guid userId,
-        [FromServices] IRepository<GeneralDetails> repository)
+    private async Task<IResult> GetAll([FromServices] IRepository<FileMetaData> repository)
     {
-        List<GeneralDetails> list = await repository.List(userId);
+        List<FileMetaData> list = await repository.List();
         return Results.Ok(list);
     }
 
     private async Task<IResult> Update(
-        Guid userId,
         Guid id,
-        GeneralDetailsUpdateValidator validator,
-        [FromBody] GeneralDetails entity,
-        [FromServices] IRepository<GeneralDetails> repository)
+        FileMetaDataUpdateValidator validator,
+        [FromBody] FileMetaData entity,
+        [FromServices] IRepository<FileMetaData> repository)
     {
         if (id != entity.Id)
         {
@@ -142,10 +108,7 @@ public sealed class GeneralDetailsEndpoints : ICarterModule
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        GeneralDetails newEntity = (GeneralDetails)entity.Clone();
-        newEntity.UserId = userId;
-
-        GeneralDetails? result = await repository.Update(newEntity);
+        FileMetaData? result = await repository.Update(entity);
         if (result is null)
         {
             return Results.BadRequest($"Error updating the entity with the Id '{id}'.");

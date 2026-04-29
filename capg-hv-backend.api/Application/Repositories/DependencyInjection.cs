@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddTransient<IRepository<FormalEducation>, FormalEducationRepository>();
         services.AddTransient<IRepository<Publication>, PublicationRepository>();
         services.AddTransient<IRepository<WorkExperience>, WorkExperienceRepository>();
+        services.AddTransient<IRepository<FileMetaData>, FileMetaDataRepository>();
 
         return services;
     }

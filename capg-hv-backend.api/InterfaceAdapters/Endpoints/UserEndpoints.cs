@@ -12,7 +12,8 @@ public sealed class UserEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        RouteGroupBuilder group = app.MapGroup("api/v1/users");
+        RouteGroupBuilder group = app.MapGroup("api/v1/users")
+            .WithTags("Users");
 
         group.MapGet("/", GetAll)
             .Produces<List<User>>()
@@ -56,7 +57,7 @@ public sealed class UserEndpoints : ICarterModule
         User? result = await repository.Create(entity);
         if (result is null)
         {
-            return Results.Problem("Error creating user.", statusCode: 500);
+            return Results.Problem("Error creating entity.", statusCode: 500);
         }
 
         return Results.Created($"api/v1/users/{result.Id}", result);
@@ -67,7 +68,7 @@ public sealed class UserEndpoints : ICarterModule
         User? result = await repository.Delete(id);
         if (result is null)
         {
-            return Results.BadRequest($"Error deleting the user with Id '{id}'");
+            return Results.BadRequest($"Error deleting the entity with Id '{id}'");
         }
 
         return Results.NoContent();
@@ -78,7 +79,7 @@ public sealed class UserEndpoints : ICarterModule
         User? result = await repository.Get(id);
         if (result is null)
         {
-            return Results.BadRequest("The user does not exist in the database.");
+            return Results.BadRequest("The entity does not exist in the database.");
         }
 
         return Results.Ok(result);
@@ -110,7 +111,7 @@ public sealed class UserEndpoints : ICarterModule
         User? result = await repository.Update(entity);
         if (result is null)
         {
-            return Results.BadRequest($"Error updating the user with the Id '{id}'.");
+            return Results.BadRequest($"Error updating the entity with the Id '{id}'.");
         }
 
         return Results.NoContent();

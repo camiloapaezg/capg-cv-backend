@@ -1,4 +1,5 @@
-﻿using capg_hv_backend.Application.Repositories.Abstractions;
+﻿
+using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
 using Carter;
@@ -12,7 +13,8 @@ public sealed class CertificationTrainingEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/certificationtraining");
+        RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/certificationtraining")
+            .WithTags("Certification/Training");
 
         group.MapGet("/", GetAll)
             .Produces<List<CertificationTraining>>()

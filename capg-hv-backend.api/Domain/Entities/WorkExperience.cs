@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace capg_hv_backend.Domain.Entities;
 
@@ -29,6 +30,7 @@ public sealed class WorkExperience : BaseEntity, ICloneable
 
     public DateTime? Until { get; set; }
 
+    [JsonIgnore]
     public User User { get; set; } = null!;
 
     [ForeignKey("UserId")]

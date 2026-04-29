@@ -12,7 +12,8 @@ public sealed class PersonalDetailsEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/personal");
+        RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/personal")
+            .WithTags("Personal Details");
 
         group.MapGet("/", GetAll)
             .Produces<List<PersonalDetails>>()

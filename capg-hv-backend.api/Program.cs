@@ -1,18 +1,20 @@
+using capg_hv_backend.Application.Helpers;
 using capg_hv_backend.Application.Persistence;
 using capg_hv_backend.Application.Repositories;
 using capg_hv_backend.Application.Validators;
 using capg_hv_backend.InterfaceAdapters.Middleware;
 using Carter;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer()
     .AddSwaggerGen()
     .AddPersistence(builder.Configuration)
     .AddRepositories()
     .AddValidators()
+    .AddHelpers(builder.Configuration)
     .AddCarter();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
