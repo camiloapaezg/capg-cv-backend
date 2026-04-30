@@ -1,7 +1,7 @@
 ﻿using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace capg_hv_backend.Application.Persistence.Internal;
+namespace capg_hv_backend.Application.Repositories.Internal;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {

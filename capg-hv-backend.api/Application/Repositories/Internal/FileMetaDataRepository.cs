@@ -1,5 +1,4 @@
-﻿using capg_hv_backend.Application.Persistence.Internal;
-using capg_hv_backend.Application.Repositories.Abstractions;
+﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;

@@ -8,12 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace capg_hv_backend.InterfaceAdapters.Endpoints;
 
-public sealed class FileMetaDataEndpoints : ICarterModule
+public sealed class FilesEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("api/v1/files")
-            .WithTags("Files Metadata");
+            .WithTags("Files");
 
         group.MapGet("/", GetAll)
             .Produces<List<FileMetaData>>()

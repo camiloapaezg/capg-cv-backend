@@ -1,6 +1,6 @@
-﻿using capg_hv_backend.Application.Persistence;
-using capg_hv_backend.Application.Persistence.Internal;
-using capg_hv_backend.Application.Repositories;
+﻿using capg_hv_backend.Application.Repositories;
+using capg_hv_backend.Application.Repositories.Abstractions;
+using capg_hv_backend.Application.Repositories.Internal;
 using capg_hv_backend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +14,14 @@ public class RepositoriesFixture : IAsyncLifetime
     public RepositoriesFixture()
     {
         TestHost = CreateHost();
+    }
+
+    public static string BucketName
+    {
+        get
+        {
+            return "test-bucket";
+        }
     }
 
     public static User DefaultUser
@@ -41,22 +49,22 @@ public class RepositoriesFixture : IAsyncLifetime
                 .ConfigureServices((context, services) =>
                 {
                     services.AddLogging()
-                    .AddPersistence(context.Configuration)
-                    .AddRepositories();
+                    .AddRepositories(context.Configuration);
                 });
 
         return builder.Build();
     }
 
-    public virtual async Task DisposeAsync()
+    public async Task DisposeAsync()
     {
-        // Deletes the database.
         using IServiceScope scope = TestHost.Services.CreateScope();
-        ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await dbContext.Database.EnsureDeletedAsync();
+
+        // Deletes the test bucket
+        IFilesRepository filesRepository = scope.ServiceProvider.GetRequiredService<IFilesRepository>();
+        await filesRepository.DeleteBucket(BucketName);
     }
 
-    public virtual async Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         using IServiceScope scope = TestHost.Services.CreateScope();
         ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

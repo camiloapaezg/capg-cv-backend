@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using capg_hv_backend.Application.Persistence.Internal;
+using capg_hv_backend.Application.Repositories.Internal;
 
 #nullable disable
 

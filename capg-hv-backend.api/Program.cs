@@ -1,5 +1,4 @@
 using capg_hv_backend.Application.Helpers;
-using capg_hv_backend.Application.Persistence;
 using capg_hv_backend.Application.Repositories;
 using capg_hv_backend.Application.Validators;
 using capg_hv_backend.InterfaceAdapters.Middleware;
@@ -8,8 +7,7 @@ using Carter;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer()
     .AddSwaggerGen()
-    .AddPersistence(builder.Configuration)
-    .AddRepositories()
+    .AddRepositories(builder.Configuration)
     .AddValidators()
     .AddHelpers(builder.Configuration)
     .AddCarter();
@@ -22,7 +20,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCustomExceptionHandler();
-app.UsePersistence();
+app.UseRepositories();
 app.UseHttpsRedirection();
 app.MapCarter();
 app.Run();
