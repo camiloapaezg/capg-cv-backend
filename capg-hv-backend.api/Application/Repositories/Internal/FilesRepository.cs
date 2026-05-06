@@ -146,8 +146,7 @@ public sealed class FilesRepository(IOptions<FileStorageOptions> options) : IFil
             Key = key,
             InputStream = fileStream,
             ContentType = "application/octet-stream",
-            MD5Digest = md5Checksum,
-            CalculateContentMD5Header = true,
+            ChecksumMD5 = md5Checksum
         };
 
         putRequest.Metadata.Add("x-amz-meta-md5", md5Checksum);

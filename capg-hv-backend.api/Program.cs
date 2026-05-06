@@ -6,6 +6,7 @@ using Carter;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer()
     .AddSwaggerGen()
+    .AddCustomMiddleware()
     .AddInfrastructure(builder.Configuration)
     .AddApplication(builder.Configuration)
     .AddCarter();
