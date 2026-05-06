@@ -21,8 +21,6 @@ public static class DependencyInjection
         services.AddValidatorsFromAssemblyContaining<PublicationUpdateValidator>();
         services.AddValidatorsFromAssemblyContaining<WorkExperienceAddValidator>();
         services.AddValidatorsFromAssemblyContaining<WorkExperienceUpdateValidator>();
-        services.AddValidatorsFromAssemblyContaining<FileMetaDataAddValidator>();
-        services.AddValidatorsFromAssemblyContaining<FileMetaDataUpdateValidator>();
 
         return services;
     }

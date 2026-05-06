@@ -1,5 +1,6 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
+using capg_hv_backend.Infrastructure.Persistence.Internal;
 using Microsoft.EntityFrameworkCore;
 
 namespace capg_hv_backend.Application.Repositories.Internal;

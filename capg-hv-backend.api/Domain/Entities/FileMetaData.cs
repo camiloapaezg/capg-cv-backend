@@ -19,6 +19,7 @@ public sealed class FileMetaData : BaseEntity, ICloneable
 
     [Required]
     public long SizeInBytes { get; set; }
+
     public object Clone()
     {
         return new FileMetaData()

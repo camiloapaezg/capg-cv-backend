@@ -1,0 +1,156 @@
+﻿using capg_hv_backend.Application.Repositories.Abstractions;
+using capg_hv_backend.Application.Validators.Internal;
+using capg_hv_backend.Domain.Entities;
+using Carter;
+using Carter.ModelBinding;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Mvc;
+
+namespace capg_hv_backend.Endpoints.Internal;
+
+public sealed class WorkExperienceEndpoints : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/experience")
+            .WithTags("Work Experience");
+
+        group.MapGet("/", GetAll)
+            .Produces<List<WorkExperience>>()
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        group.MapGet("{id:guid}", Get)
+            .Produces<WorkExperience>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        group.MapPost("/", Create)
+            .Produces<WorkExperience>()
+            .Produces(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status422UnprocessableEntity)
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        group.MapDelete("{id:guid}", Delete)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        group.MapPut("{id:guid}", Update)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status422UnprocessableEntity)
+            .Produces(StatusCodes.Status500InternalServerError);
+    }
+
+    private async Task<IResult> Create(
+        Guid userId,
+        WorkExperienceAddValidator validator,
+        [FromBody] WorkExperience entity,
+        [FromServices] IRepository<User> usersRepo,
+        [FromServices] IRepository<WorkExperience> experienceRepo)
+    {
+        ValidationResult validationResult = validator.Validate(entity);
+        if (!validationResult.IsValid)
+        {
+            return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
+        }
+
+        bool exists = await usersRepo.Exists(userId);
+        if (!exists)
+        {
+            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+        }
+
+        WorkExperience newEntity = (WorkExperience)entity.Clone();
+        newEntity.UserId = userId;
+
+        WorkExperience? result = await experienceRepo.Create(newEntity);
+        if (result is null)
+        {
+            return Results.Problem("Error creating entity.", statusCode: 500);
+        }
+
+        return Results.Created($"api/v1/users/{userId}/experience/{result.Id}", result);
+    }
+
+    private async Task<IResult> Delete(
+        Guid userId,
+        Guid id,
+        [FromServices] IRepository<User> usersRepo,
+        [FromServices] IRepository<WorkExperience> experienceRepo)
+    {
+        bool exists = await usersRepo.Exists(userId);
+        if (!exists)
+        {
+            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+        }
+
+        WorkExperience? result = await experienceRepo.Delete(id);
+        if (result is null)
+        {
+            return Results.BadRequest($"Error deleting entity with Id '{id}'");
+        }
+
+        return Results.NoContent();
+    }
+
+    private async Task<IResult> Get(
+        Guid userId,
+        Guid id,
+        [FromServices] IRepository<User> usersRepo,
+        [FromServices] IRepository<WorkExperience> experienceRepo)
+    {
+        bool exists = await usersRepo.Exists(userId);
+        if (!exists)
+        {
+            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+        }
+
+        WorkExperience? result = await experienceRepo.Get(id);
+        if (result is null)
+        {
+            return Results.BadRequest("The entity does not exist in the database.");
+        }
+
+        return Results.Ok(result);
+    }
+
+    private async Task<IResult> GetAll(
+        Guid userId,
+        [FromServices] IRepository<WorkExperience> repository)
+    {
+        List<WorkExperience> list = await repository.List(userId);
+        return Results.Ok(list);
+    }
+
+    private async Task<IResult> Update(
+        Guid userId,
+        Guid id,
+        WorkExperienceUpdateValidator validator,
+        [FromBody] WorkExperience entity,
+        [FromServices] IRepository<WorkExperience> repository)
+    {
+        if (id != entity.Id)
+        {
+            return Results.BadRequest("The route Id is not the same as the entity Id");
+        }
+
+        ValidationResult validationResult = validator.Validate(entity);
+        if (!validationResult.IsValid)
+        {
+            return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
+        }
+
+        WorkExperience newEntity = (WorkExperience)entity.Clone();
+        newEntity.UserId = userId;
+
+        WorkExperience? result = await repository.Update(newEntity);
+        if (result is null)
+        {
+            return Results.BadRequest($"Error updating the entity with the Id '{id}'.");
+        }
+
+        return Results.NoContent();
+    }
+}
