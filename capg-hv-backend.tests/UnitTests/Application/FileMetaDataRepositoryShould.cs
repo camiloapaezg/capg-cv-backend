@@ -27,14 +27,14 @@ public class FileMetaDataRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        FileMetaData? created = await sut.Create(File);
+        FileMetaData? created = await sut.Create(File, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<FileMetaData> all = await sut.List();
+        List<FileMetaData> all = await sut.List(null, TestContext.Current.CancellationToken);
         Assert.Contains(created, all);
     }
 
@@ -44,17 +44,17 @@ public class FileMetaDataRepositoryShould(ApplicationFixture fixture)
         // Prepares
         IRepository<FileMetaData> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FileMetaData>>();
         Assert.NotNull(sut);
-        FileMetaData? deleted = await sut.Create(File);
+        FileMetaData? deleted = await sut.Create(File, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -64,20 +64,20 @@ public class FileMetaDataRepositoryShould(ApplicationFixture fixture)
         // Prepares
         IRepository<FileMetaData> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FileMetaData>>();
         Assert.NotNull(sut);
-        FileMetaData? updated = await sut.Create(File);
+        FileMetaData? updated = await sut.Create(File, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         string edit = "Edited";
         updated.Md5Hash = new string(edit);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        FileMetaData? existing = await sut.Get(updated.Id);
+        FileMetaData? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Md5Hash);
     }

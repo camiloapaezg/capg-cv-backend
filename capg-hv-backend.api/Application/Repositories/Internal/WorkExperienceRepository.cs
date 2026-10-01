@@ -47,7 +47,7 @@ public sealed class WorkExperienceRepository(ApplicationDbContext context) : IRe
 
     public async Task<WorkExperience?> Get(Guid id, CancellationToken token = default) => await _context.WorkExperience.FindAsync([id], token);
 
-    public async Task<List<WorkExperience>> List(Guid? userId = null) => await _context.WorkExperience.Where(i => i.UserId == userId).ToListAsync();
+    public async Task<List<WorkExperience>> List(Guid? userId = null, CancellationToken token = default) => await _context.WorkExperience.Where(i => i.UserId == userId).ToListAsync(token);
 
     public async Task<WorkExperience?> Update(WorkExperience entity, CancellationToken token = default)
     {

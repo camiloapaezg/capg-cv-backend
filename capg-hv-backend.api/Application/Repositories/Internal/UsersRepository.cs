@@ -36,7 +36,7 @@ public sealed class UsersRepository(ApplicationDbContext context) : IRepository<
 
     public async Task<User?> Get(Guid id, CancellationToken token = default) => await _context.Users.FindAsync([id], token);
 
-    public async Task<List<User>> List(Guid? id = null) => await _context.Users.ToListAsync();
+    public async Task<List<User>> List(Guid? id = null, CancellationToken token = default) => await _context.Users.ToListAsync(token);
 
     public async Task<User?> Update(User newUser, CancellationToken token = default)
     {

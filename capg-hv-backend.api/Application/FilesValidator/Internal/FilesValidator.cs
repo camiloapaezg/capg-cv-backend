@@ -1,7 +1,7 @@
 ﻿using capg_hv_backend.Application.FilesValidator.Abstractions;
 using capg_hv_backend.Application.FilesValidator.Entities;
 using Microsoft.Extensions.Options;
-using SixLabors.ImageSharp;
+using NetVips;
 
 namespace capg_hv_backend.Application.FilesValidator.Internal;
 
@@ -63,16 +63,16 @@ public class FilesValidator(IOptions<FileValidationOptions> options) : IFilesVal
             try
             {
                 using MemoryStream stream = new(content);
-                Image? image = await Image.LoadAsync(stream, token);
+                Image image = Image.NewFromStream(stream, access: Enums.Access.Sequential);
                 ArgumentNullException.ThrowIfNull(image);
             }
             catch (TaskCanceledException)
             {
                 return new ValidationResult(false, "The task was cancelled");
             }
-            catch
+            catch (Exception ex)
             {
-                return new ValidationResult(false, "The image is corrupted");
+                return new ValidationResult(false, "The image is corrupted: " + ex.Message);
             }
         }
 

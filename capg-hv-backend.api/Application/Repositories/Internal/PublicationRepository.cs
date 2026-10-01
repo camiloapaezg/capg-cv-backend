@@ -36,7 +36,7 @@ public sealed class PublicationRepository(ApplicationDbContext context) : IRepos
 
     public async Task<Publication?> Get(Guid id, CancellationToken token = default) => await _context.Publications.FindAsync([id], token);
 
-    public async Task<List<Publication>> List(Guid? userId = null) => await _context.Publications.Where(i => i.UserId == userId).ToListAsync();
+    public async Task<List<Publication>> List(Guid? userId = null, CancellationToken token = default) => await _context.Publications.Where(i => i.UserId == userId).ToListAsync(token);
 
     public async Task<Publication?> Update(Publication entity, CancellationToken token = default)
     {

@@ -25,14 +25,14 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        GeneralDetails? created = await sut.Create(_generalDetails);
+        GeneralDetails? created = await sut.Create(_generalDetails, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<GeneralDetails> all = await sut.List(_generalDetails.UserId);
+        List<GeneralDetails> all = await sut.List(_generalDetails.UserId, TestContext.Current.CancellationToken);
         Assert.Single(all);
     }
 
@@ -45,17 +45,17 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_generalDetails);
         IRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
         Assert.NotNull(sut);
-        GeneralDetails? deleted = await sut.Create(_generalDetails);
+        GeneralDetails? deleted = await sut.Create(_generalDetails, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -68,20 +68,20 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_generalDetails);
         IRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
         Assert.NotNull(sut);
-        GeneralDetails? updated = await sut.Create(_generalDetails);
+        GeneralDetails? updated = await sut.Create(_generalDetails, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         string edit = "Edited";
         updated.Description = new string(edit);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        GeneralDetails? existing = await sut.Get(updated.Id);
+        GeneralDetails? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Description);
     }

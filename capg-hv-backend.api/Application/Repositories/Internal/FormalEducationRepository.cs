@@ -36,7 +36,7 @@ public sealed class FormalEducationRepository(ApplicationDbContext context) : IR
 
     public async Task<FormalEducation?> Get(Guid id, CancellationToken token = default) => await _context.FormalEducation.FindAsync([id], token);
 
-    public async Task<List<FormalEducation>> List(Guid? userId = null) => await _context.FormalEducation.Where(i => i.UserId == userId).ToListAsync();
+    public async Task<List<FormalEducation>> List(Guid? userId = null, CancellationToken token = default) => await _context.FormalEducation.Where(i => i.UserId == userId).ToListAsync(token);
 
     public async Task<FormalEducation?> Update(FormalEducation entity, CancellationToken token = default)
     {

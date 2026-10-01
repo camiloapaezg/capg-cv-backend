@@ -7,19 +7,19 @@ using System.Collections;
 
 namespace capg_hv_backend.tests.UnitTests.Application;
 
-internal class FilesValidatorData : IEnumerable<object[]>
+internal class FilesValidatorData : IEnumerable<TheoryDataRow<byte[], string, bool>>
 {
-    private readonly List<object[]> _data =
-    [
-        [TestFiles.EXE, "file.exe", false],
-        [TestFiles.PNG, "file.png", true],
-        [TestFiles.PDF, "file.pdf", true],
-        [TestFiles.Bash, "file.sh", false],
-        [TestFiles.JPG, "file.jpg", true],
-        [TestFiles.JPG, string.Empty, false],
+    private readonly List<TheoryDataRow<byte[], string, bool>> _data =
+  [
+      new TheoryDataRow<byte[], string, bool>(TestFiles.EXE, "file.exe", false),
+        new TheoryDataRow<byte[], string, bool>(TestFiles.PNG, "file.png", true),
+        new TheoryDataRow<byte[], string, bool>(TestFiles.PDF, "file.pdf", true),
+        new TheoryDataRow<byte[], string, bool>(TestFiles.Bash, "file.sh", false),
+        new TheoryDataRow<byte[], string, bool>(TestFiles.JPG, "file.jpg", true),
+        new TheoryDataRow<byte[], string, bool>(TestFiles.JPG, string.Empty, false),
     ];
 
-    public IEnumerator<object[]> GetEnumerator() => _data.GetEnumerator();
+    public IEnumerator<TheoryDataRow<byte[], string, bool>> GetEnumerator() => _data.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
@@ -36,7 +36,7 @@ public class FilesValidatorShould(ApplicationFixture fixture)
         IFilesValidator sut = _fixture.TestHost.Services.GetRequiredService<IFilesValidator>();
         Assert.NotNull(sut);
 
-        ValidationResult result = await sut.ValidateFileAsync(content, fileName);
+        ValidationResult result = await sut.ValidateFileAsync(content, fileName, TestContext.Current.CancellationToken);
         Assert.Equal(isValid, result.IsValid);
     }
 }

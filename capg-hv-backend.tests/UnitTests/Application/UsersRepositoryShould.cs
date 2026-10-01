@@ -18,14 +18,14 @@ public class UsersRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        User? created = await sut.Create(ApplicationFixture.DefaultUser);
+        User? created = await sut.Create(ApplicationFixture.DefaultUser, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<User> all = await sut.List();
+        List<User> all = await sut.List(null, TestContext.Current.CancellationToken);
         Assert.Contains(created, all);
     }
 
@@ -35,17 +35,17 @@ public class UsersRepositoryShould(ApplicationFixture fixture)
         // Prepares
         IRepository<User> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         Assert.NotNull(sut);
-        User? deleted = await sut.Create(ApplicationFixture.DefaultUser);
+        User? deleted = await sut.Create(ApplicationFixture.DefaultUser, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -168,33 +168,33 @@ public class UsersRepositoryShould(ApplicationFixture fixture)
             Assert.NotNull(experience);
         }
 
-        List<WorkExperience> savedWorkExperience = await experienceRepo.List(deleted.Id);
+        List<WorkExperience> savedWorkExperience = await experienceRepo.List(deleted.Id, TestContext.Current.CancellationToken);
         Assert.Equal(workExperience.Count, savedWorkExperience.Count);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        workExperience = await experienceRepo.List(deleted.Id);
+        workExperience = await experienceRepo.List(deleted.Id, TestContext.Current.CancellationToken);
         Assert.Empty(workExperience);
 
-        certificates = await certificatesRepo.List(deleted.Id);
+        certificates = await certificatesRepo.List(deleted.Id, TestContext.Current.CancellationToken);
         Assert.Empty(certificates);
 
-        publications = await publicationsRepo.List(deleted.Id);
+        publications = await publicationsRepo.List(deleted.Id, TestContext.Current.CancellationToken);
         Assert.Empty(publications);
 
-        formalEducation = await educationRepo.List(deleted.Id);
+        formalEducation = await educationRepo.List(deleted.Id, TestContext.Current.CancellationToken);
         Assert.Empty(formalEducation);
 
-        personalDetails = await personalDetailsRepo.Get(personalDetails.Id);
+        personalDetails = await personalDetailsRepo.Get(personalDetails.Id, TestContext.Current.CancellationToken);
         Assert.Null(personalDetails);
 
-        generalDetails = await generalDetailsRepo.Get(generalDetails.Id);
+        generalDetails = await generalDetailsRepo.Get(generalDetails.Id, TestContext.Current.CancellationToken);
         Assert.Null(generalDetails);
 
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -204,20 +204,20 @@ public class UsersRepositoryShould(ApplicationFixture fixture)
         // Prepares
         IRepository<User> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
         Assert.NotNull(sut);
-        User? updated = await sut.Create(ApplicationFixture.DefaultUser);
+        User? updated = await sut.Create(ApplicationFixture.DefaultUser, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         string edit = "Edited";
         updated.LastName = new string(edit);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        User? existing = await sut.Get(updated.Id);
+        User? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.LastName);
     }

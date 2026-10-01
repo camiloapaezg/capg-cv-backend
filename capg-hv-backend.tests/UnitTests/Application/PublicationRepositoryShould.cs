@@ -25,14 +25,14 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        Publication? created = await sut.Create(_publication);
+        Publication? created = await sut.Create(_publication, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<Publication> all = await sut.List(_publication.UserId);
+        List<Publication> all = await sut.List(_publication.UserId, TestContext.Current.CancellationToken);
         Assert.Single(all);
     }
 
@@ -45,17 +45,17 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_publication);
         IRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
         Assert.NotNull(sut);
-        Publication? deleted = await sut.Create(_publication);
+        Publication? deleted = await sut.Create(_publication, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -68,20 +68,20 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_publication);
         IRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
         Assert.NotNull(sut);
-        Publication? updated = await sut.Create(_publication);
+        Publication? updated = await sut.Create(_publication, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         string edit = "Edited";
         updated.Location = new string(edit);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        Publication? existing = await sut.Get(updated.Id);
+        Publication? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Location);
     }

@@ -36,7 +36,7 @@ public sealed class GeneralDetailsRepository(ApplicationDbContext context) : IRe
 
     public async Task<GeneralDetails?> Get(Guid id, CancellationToken token = default) => await _context.GeneralDetails.FindAsync([id], token);
 
-    public async Task<List<GeneralDetails>> List(Guid? userId = null) => await _context.GeneralDetails.Where(i => i.UserId == userId).ToListAsync();
+    public async Task<List<GeneralDetails>> List(Guid? userId = null, CancellationToken token = default) => await _context.GeneralDetails.Where(i => i.UserId == userId).ToListAsync(token);
 
     public async Task<GeneralDetails?> Update(GeneralDetails entity, CancellationToken token = default)
     {

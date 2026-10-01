@@ -39,7 +39,7 @@ public sealed class FileMetaDataRepository(ApplicationDbContext context) : IRepo
 
     public async Task<FileMetaData?> Get(Guid id, CancellationToken token = default) => await _context.FileMetaData.FindAsync([id], token);
 
-    public async Task<List<FileMetaData>> List(Guid? id = null) => await _context.FileMetaData.ToListAsync();
+    public async Task<List<FileMetaData>> List(Guid? id = null, CancellationToken token = default) => await _context.FileMetaData.ToListAsync(token);
 
     public async Task<FileMetaData?> Update(FileMetaData entity, CancellationToken token = default)
     {

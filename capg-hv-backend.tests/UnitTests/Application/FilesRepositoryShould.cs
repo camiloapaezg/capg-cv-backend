@@ -22,7 +22,7 @@ public class FilesRepositoryShould(ApplicationFixture fixture)
         // Uploads
         Guid fileId = Guid.NewGuid();
         using MemoryStream stream = new(TestFiles.JPG);
-        FileOperationResult<string> uploadResult = await sut.Upload(fileId, stream);
+        FileOperationResult<string> uploadResult = await sut.Upload(fileId, stream, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, uploadResult.StatusCode);
         Assert.NotNull(uploadResult.Data);
 
@@ -32,7 +32,7 @@ public class FilesRepositoryShould(ApplicationFixture fixture)
         Assert.True(getInfoResult.Data is not null);
 
         // Downloads
-        FileOperationResult<byte[]> downloadResult = await sut.Download(fileId);
+        FileOperationResult<byte[]> downloadResult = await sut.Download(fileId, TestContext.Current.CancellationToken);
         if (downloadResult?.Data is null)
         {
             Assert.Fail("The result does not contain data");
@@ -42,7 +42,7 @@ public class FilesRepositoryShould(ApplicationFixture fixture)
         Assert.Equal(TestFiles.JPG, downloadResult.Data);
 
         // Deletes
-        FileOperationResult<object> deleteResult = await sut.Delete(fileId);
+        FileOperationResult<object> deleteResult = await sut.Delete(fileId, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, deleteResult.StatusCode);
 
         // Checkes

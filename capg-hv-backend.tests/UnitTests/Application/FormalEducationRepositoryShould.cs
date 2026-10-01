@@ -25,14 +25,14 @@ public class FormalEducationRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        FormalEducation? created = await sut.Create(_formalEducation);
+        FormalEducation? created = await sut.Create(_formalEducation, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<FormalEducation> all = await sut.List(_formalEducation.UserId);
+        List<FormalEducation> all = await sut.List(_formalEducation.UserId, TestContext.Current.CancellationToken);
         Assert.Single(all);
     }
 
@@ -45,17 +45,17 @@ public class FormalEducationRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_formalEducation);
         IRepository<FormalEducation> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
-        FormalEducation? deleted = await sut.Create(_formalEducation);
+        FormalEducation? deleted = await sut.Create(_formalEducation, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -68,20 +68,20 @@ public class FormalEducationRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_formalEducation);
         IRepository<FormalEducation> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<FormalEducation>>();
         Assert.NotNull(sut);
-        FormalEducation? updated = await sut.Create(_formalEducation);
+        FormalEducation? updated = await sut.Create(_formalEducation, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         string edit = "Edited";
         updated.Description = new string(edit);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        FormalEducation? existing = await sut.Get(updated.Id);
+        FormalEducation? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Description);
     }

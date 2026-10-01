@@ -105,6 +105,7 @@ public sealed class FilesEndpoints : ICarterModule
     private async Task<IResult> Upload(
         Guid userId,
         IFormFile file,
+        [FromQuery] string? fileName,
         [FromServices] IOptions<MessageBrokerOptions> options,
         [FromServices] IFilesValidator fileValidator,
         [FromServices] IRepository<User> usersRepository,
@@ -124,21 +125,21 @@ public sealed class FilesEndpoints : ICarterModule
         }
 
         // Prepares file content.
-        string fileName = file.FileName;
+        string _fileName = fileName ?? file.FileName;
         using MemoryStream stream = new();
         await file.CopyToAsync(stream);
         stream.Position = 0;
 
         // Validates file content
-        ValidationResult validationResult = await fileValidator.ValidateFileAsync(stream.ToArray(), fileName);
+        ValidationResult validationResult = await fileValidator.ValidateFileAsync(stream.ToArray(), _fileName);
         if (!validationResult.IsValid)
         {
             return Results.BadRequest(validationResult.Message);
         }
 
         // Creates the request.
-        fileName = FilesValidator.GetSanitizedFileName(fileName);
-        FileScanRequestDto scanRequest = new(Guid.NewGuid(), userId, fileName);
+        _fileName = FilesValidator.GetSanitizedFileName(_fileName);
+        FileScanRequestDto scanRequest = new(Guid.NewGuid(), userId, _fileName);
 
         // Saves file to quarantine blob.
         FileOperationResult<string> uploaded = await filesRepository.UploadToQuarantine(scanRequest.Id, stream);
@@ -152,6 +153,6 @@ public sealed class FilesEndpoints : ICarterModule
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(scanRequest);
         await messageBroker.SendMessage(queueName, body);
 
-        return Results.Accepted();
+        return Results.Accepted(value: "lalalala");
     }
 }

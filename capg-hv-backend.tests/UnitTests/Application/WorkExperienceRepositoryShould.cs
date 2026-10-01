@@ -25,14 +25,14 @@ public class WorkExperienceRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        WorkExperience? created = await sut.Create(_experience);
+        WorkExperience? created = await sut.Create(_experience, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<WorkExperience> all = await sut.List(_experience.UserId);
+        List<WorkExperience> all = await sut.List(_experience.UserId, TestContext.Current.CancellationToken);
         Assert.Single(all);
     }
 
@@ -45,17 +45,17 @@ public class WorkExperienceRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_experience);
         IRepository<WorkExperience> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
         Assert.NotNull(sut);
-        WorkExperience? deleted = await sut.Create(_experience);
+        WorkExperience? deleted = await sut.Create(_experience, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -68,20 +68,20 @@ public class WorkExperienceRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_experience);
         IRepository<WorkExperience> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<WorkExperience>>();
         Assert.NotNull(sut);
-        WorkExperience? updated = await sut.Create(_experience);
+        WorkExperience? updated = await sut.Create(_experience, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         DateTime edit = DateTime.UtcNow;
         updated.Until = new DateTime(edit.Ticks, DateTimeKind.Utc);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        WorkExperience? existing = await sut.Get(updated.Id);
+        WorkExperience? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Until!.Value);
     }

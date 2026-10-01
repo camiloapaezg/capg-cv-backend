@@ -36,7 +36,7 @@ public sealed class CertificationTrainingRepository(ApplicationDbContext context
 
     public async Task<CertificationTraining?> Get(Guid id, CancellationToken token = default) => await _context.CertificationTraining.FindAsync([id], token);
 
-    public async Task<List<CertificationTraining>> List(Guid? userId = null) => await _context.CertificationTraining.Where(i => i.UserId == userId).ToListAsync();
+    public async Task<List<CertificationTraining>> List(Guid? userId = null, CancellationToken token = default) => await _context.CertificationTraining.Where(i => i.UserId == userId).ToListAsync(token);
 
     public async Task<CertificationTraining?> Update(CertificationTraining entity, CancellationToken token = default)
     {

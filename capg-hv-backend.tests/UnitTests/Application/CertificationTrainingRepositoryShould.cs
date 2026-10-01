@@ -25,14 +25,14 @@ public class CertificationTrainingRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(sut);
 
         // Creates
-        CertificationTraining? created = await sut.Create(_certification);
+        CertificationTraining? created = await sut.Create(_certification, TestContext.Current.CancellationToken);
         Assert.NotNull(created);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id);
+        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<CertificationTraining> all = await sut.List(_certification.UserId);
+        List<CertificationTraining> all = await sut.List(_certification.UserId, TestContext.Current.CancellationToken);
         Assert.Single(all);
     }
 
@@ -45,17 +45,17 @@ public class CertificationTrainingRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_certification);
         IRepository<CertificationTraining> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
         Assert.NotNull(sut);
-        CertificationTraining? deleted = await sut.Create(_certification);
+        CertificationTraining? deleted = await sut.Create(_certification, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id);
+        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id);
+        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(deleted);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id);
+        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 
@@ -68,20 +68,20 @@ public class CertificationTrainingRepositoryShould(ApplicationFixture fixture)
         Assert.NotNull(_certification);
         IRepository<CertificationTraining> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<CertificationTraining>>();
         Assert.NotNull(sut);
-        CertificationTraining? updated = await sut.Create(_certification);
+        CertificationTraining? updated = await sut.Create(_certification, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Updates.
-        updated = await sut.Get(updated.Id);
+        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         string edit = "Edited";
         updated.Institution = new string(edit);
-        updated = await sut.Update(updated);
+        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
 
         // Asserts.
-        CertificationTraining? existing = await sut.Get(updated.Id);
+        CertificationTraining? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Institution);
     }
