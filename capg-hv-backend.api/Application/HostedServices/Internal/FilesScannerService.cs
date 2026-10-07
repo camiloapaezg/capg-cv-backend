@@ -1,4 +1,5 @@
-﻿using capg_hv_backend.Application.Repositories.Abstractions;
+﻿using capg_hv_backend.Application.Middlewares.Internal;
+using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Repositories.Entities;
 using capg_hv_backend.Domain.Entities;
 using capg_hv_backend.Endpoints.Entities;
@@ -7,6 +8,7 @@ using capg_hv_backend.Infrastructure.FilesScanner.Entities;
 using capg_hv_backend.Infrastructure.MessageBroker;
 using capg_hv_backend.Infrastructure.MessageBroker.Abstractions;
 using Microsoft.Extensions.Options;
+using Polly;
 using RabbitMQ.Client.Events;
 using System.Net;
 using System.Text.Json;
@@ -51,18 +53,19 @@ public class FilesScannerService(ILogger<FilesScannerService> logger, IOptions<M
 
         _logger.LogInformation("Scanning file with Id '{Id}' and name '{FileName}' belonging to the user '{UserId}'...", request.Id, request.FileName, request.UserId);
         using IServiceScope scope = _serviceProvider.CreateScope();
+        ResiliencePipeline pipeline = scope.ServiceProvider.GetRequiredKeyedService<ResiliencePipeline>(ResilienceMiddleware.PipelineName);
         IFilesScanner fileScanner = scope.ServiceProvider.GetRequiredService<IFilesScanner>();
         IFilesRepository filesRepository = scope.ServiceProvider.GetRequiredService<IFilesRepository>();
 
         // Gets the file from quarantine
-        FileOperationResult<byte[]> downloaded = await filesRepository.DownloadFromQuarantine(request.Id);
+        FileOperationResult<byte[]> downloaded = await pipeline.ExecuteAsync(async (token) => await filesRepository.DownloadFromQuarantine(request.Id, token)).ConfigureAwait(false);
         if (downloaded.StatusCode != HttpStatusCode.OK || downloaded.Data is null)
         {
             return;
         }
 
         // Scans file content with antivirus service
-        FileScanResult fileScanResult = await fileScanner.ScanAsync(downloaded.Data);
+        FileScanResult fileScanResult = await pipeline.ExecuteAsync(async (token) => await fileScanner.ScanAsync(downloaded.Data, token)).ConfigureAwait(false);
         switch (fileScanResult.Status)
         {
             case FileScanStatus.Clean:
@@ -70,7 +73,7 @@ public class FilesScannerService(ILogger<FilesScannerService> logger, IOptions<M
                 using (MemoryStream stream = new(downloaded.Data))
                 {
                     // Saves to permanent storage.
-                    FileOperationResult<string> created = await filesRepository.Upload(request.Id, stream);
+                    FileOperationResult<string> created = await pipeline.ExecuteAsync(async (token) => await filesRepository.Upload(request.Id, stream, token)).ConfigureAwait(false);
                     if (created.StatusCode != HttpStatusCode.OK || created.Data is null)
                     {
                         return;
@@ -91,7 +94,7 @@ public class FilesScannerService(ILogger<FilesScannerService> logger, IOptions<M
                 };
 
                 IRepository<FileMetaData> metadataRepository = scope.ServiceProvider.GetRequiredService<IRepository<FileMetaData>>();
-                await metadataRepository.Create(metadata);
+                await pipeline.ExecuteAsync(async (token) => await metadataRepository.Create(metadata, token)).ConfigureAwait(false);
 
                 break;
 
@@ -105,6 +108,6 @@ public class FilesScannerService(ILogger<FilesScannerService> logger, IOptions<M
         }
 
         // Deletes from quarantine
-        await filesRepository.DeleteFromQuarantine(request.Id);
+        await pipeline.ExecuteAsync(async (token) => await filesRepository.DeleteFromQuarantine(request.Id, token)).ConfigureAwait(false);
     }
 }

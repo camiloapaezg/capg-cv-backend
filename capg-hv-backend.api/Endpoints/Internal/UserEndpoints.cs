@@ -1,4 +1,6 @@
-﻿using capg_hv_backend.Application.Repositories.Abstractions;
+﻿using capg_hv_backend.Application.Channels.Abstractions;
+using capg_hv_backend.Application.Channels.Entities;
+using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
 using Carter;
@@ -32,7 +34,7 @@ public sealed class UserEndpoints : ICarterModule
             .Produces(StatusCodes.Status500InternalServerError);
 
         group.MapDelete("{id:guid}", Delete)
-            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status202Accepted)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
 
@@ -63,15 +65,25 @@ public sealed class UserEndpoints : ICarterModule
         return Results.Created($"api/v1/users/{result.Id}", result);
     }
 
-    private async Task<IResult> Delete(Guid id, [FromServices] IRepository<User> repository)
+    private async Task<IResult> Delete(Guid id,
+        [FromServices] IRepository<User> usersRepository,
+        [FromServices] IRepository<FileMetaData> metadataRepository,
+        [FromServices] IChannel<FileDeleteRequestDto> channel)
     {
-        User? result = await repository.Delete(id);
+        User? result = await usersRepository.Delete(id);
         if (result is null)
         {
             return Results.BadRequest($"Error deleting the entity with Id '{id}'");
         }
 
-        return Results.NoContent();
+        // Sends request for files removal
+        List<FileMetaData> files = await metadataRepository.List(id);
+        if (files.Count > 0)
+        {
+            files.ForEach(async file => await channel.WriteAsync(new FileDeleteRequestDto(file.Id, file.Name)));
+        }
+
+        return Results.Accepted();
     }
 
     private async Task<IResult> Get(Guid id, [FromServices] IRepository<User> repository)

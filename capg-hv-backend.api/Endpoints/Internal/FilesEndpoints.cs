@@ -54,18 +54,24 @@ public sealed class FilesEndpoints : ICarterModule
             return Results.BadRequest("The user does not exist in the database.");
         }
 
-        // Deletes the metadata
-        FileMetaData? metadata = await metadataRepository.Delete(id);
+        // Gets the metadata
+        FileMetaData? metadata = await metadataRepository.Get(id);
         if (metadata is null)
         {
             return Results.BadRequest("The file is not registered in the database.");
         }
 
-        // Deletes the file
+        // Deletes the file and metadata
         FileOperationResult<object> deleted = await filesRepository.Delete(metadata.Id);
         if (deleted.StatusCode != HttpStatusCode.NoContent)
         {
             return Results.InternalServerError(deleted.Message);
+        }
+
+        metadata = await metadataRepository.Delete(id);
+        if (metadata is null)
+        {
+            return Results.BadRequest("Error deleting file metadata.");
         }
 
         return Results.NoContent();
@@ -124,8 +130,15 @@ public sealed class FilesEndpoints : ICarterModule
             return Results.BadRequest("The user does not exist in the database.");
         }
 
+        // Prepares file name
+        string _fileName = file.FileName;
+        if (fileName is not null)
+        {
+            string extension = Path.GetExtension(file.FileName);
+            _fileName = fileName + extension;
+        }
+
         // Prepares file content.
-        string _fileName = fileName ?? file.FileName;
         using MemoryStream stream = new();
         await file.CopyToAsync(stream);
         stream.Position = 0;
@@ -153,6 +166,6 @@ public sealed class FilesEndpoints : ICarterModule
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(scanRequest);
         await messageBroker.SendMessage(queueName, body);
 
-        return Results.Accepted(value: "lalalala");
+        return Results.Accepted();
     }
 }

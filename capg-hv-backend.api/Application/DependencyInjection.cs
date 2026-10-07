@@ -1,4 +1,5 @@
-﻿using capg_hv_backend.Application.FilesValidator;
+﻿using capg_hv_backend.Application.Channels;
+using capg_hv_backend.Application.FilesValidator;
 using capg_hv_backend.Application.HostedServices;
 using capg_hv_backend.Application.Repositories;
 using capg_hv_backend.Application.Validators;
@@ -12,6 +13,7 @@ public static class DependencyInjection
         services.AddRepositories(configuration)
             .AddValidators()
             .AddFilesValidator(configuration)
+            .AddChannels()
             .AddHostedServices();
 
         return services;

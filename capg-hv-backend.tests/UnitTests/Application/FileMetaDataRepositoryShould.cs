@@ -34,8 +34,12 @@ public class FileMetaDataRepositoryShould(ApplicationFixture fixture)
         bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
         Assert.True(exists);
 
-        List<FileMetaData> all = await sut.List(null, TestContext.Current.CancellationToken);
+        List<FileMetaData> all = await sut.List(File.OwnerId, TestContext.Current.CancellationToken);
         Assert.Contains(created, all);
+
+        // Checks result when Owner Id is empty.
+        all = await sut.List(Guid.Empty, TestContext.Current.CancellationToken);
+        Assert.Empty(all);
     }
 
     [Fact]
