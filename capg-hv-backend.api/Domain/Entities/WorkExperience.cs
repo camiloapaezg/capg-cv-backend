@@ -11,8 +11,6 @@ public sealed class WorkExperience : BaseEntity, ICloneable
     public string Company { get; set; } = null!;
 
     [MaxLength(255)]
-    public string Location { get; set; } = null!;
-    [MaxLength(255)]
     public string? ContactName { get; set; }
 
     [MaxLength(64)]
@@ -21,12 +19,17 @@ public sealed class WorkExperience : BaseEntity, ICloneable
     [Required]
     public string Description { get; set; } = null!;
 
+    public Guid? FileId { get; set; }
+
     [Required]
     public DateTime From { get; set; }
 
     [Required]
     [MaxLength(64)]
     public string JobTitle { get; set; } = null!;
+
+    [MaxLength(255)]
+    public string Location { get; set; } = null!;
 
     public DateTime? Until { get; set; }
 
@@ -49,7 +52,8 @@ public sealed class WorkExperience : BaseEntity, ICloneable
             ContactName = ContactName,
             ContactNumber = ContactNumber,
             Description = Description,
-            Location = Location
+            Location = Location,
+            FileId = FileId,
         };
     }
 }

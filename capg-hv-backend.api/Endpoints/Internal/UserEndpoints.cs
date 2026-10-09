@@ -1,12 +1,14 @@
 ﻿using capg_hv_backend.Application.Channels.Abstractions;
 using capg_hv_backend.Application.Channels.Entities;
 using capg_hv_backend.Application.Repositories.Abstractions;
+using capg_hv_backend.Application.Repositories.Entities;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
 using Carter;
 using Carter.ModelBinding;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace capg_hv_backend.Endpoints.Internal;
 
@@ -42,6 +44,13 @@ public sealed class UserEndpoints : ICarterModule
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status422UnprocessableEntity)
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        // Files
+        group.MapGet("{id:guid}/photo", DownloadPhoto)
+            .WithDescription("Downloads the user's profile photo")
+            .Produces<User>()
+            .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
     }
 
@@ -127,5 +136,35 @@ public sealed class UserEndpoints : ICarterModule
         }
 
         return Results.NoContent();
+    }
+
+    private async Task<IResult> DownloadPhoto(
+        Guid id,
+        [FromServices] IRepository<GeneralDetails> generalDetailsRepository,
+        [FromServices] IRepository<FileMetaData> metadataRepository,
+        [FromServices] IFilesRepository filesRepository)
+    {
+        // Validates user id
+        GeneralDetails? details = await generalDetailsRepository.Get(id);
+        if (details is null)
+        {
+            return Results.BadRequest("The user does not exist in the database.");
+        }
+
+        // Gets the metadata registry
+        FileMetaData? metadata = await metadataRepository.Get(id);
+        if (metadata is null)
+        {
+            return Results.BadRequest("The file is not registered in the database.");
+        }
+
+        // Gets the file
+        FileOperationResult<byte[]> downloaded = await filesRepository.Download(id);
+        if (downloaded.StatusCode != HttpStatusCode.OK || downloaded.Data is null)
+        {
+            return Results.InternalServerError(downloaded.Message);
+        }
+
+        return TypedResults.File(fileStream: new MemoryStream(downloaded.Data), contentType: "application/octet-stream", fileDownloadName: metadata.Name);
     }
 }

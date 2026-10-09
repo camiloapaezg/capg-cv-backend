@@ -17,6 +17,8 @@ public sealed class GeneralDetails : BaseEntity, ICloneable
     [MaxLength(64)]
     public string Title { get; set; } = null!;
 
+    public Guid? PhotoFileId { get; set; }
+
     [JsonIgnore]
     public User User { get; set; } = null!;
 
@@ -33,6 +35,7 @@ public sealed class GeneralDetails : BaseEntity, ICloneable
             TechnicalSkills = TechnicalSkills,
             Languages = Languages,
             UserId = UserId,
+            PhotoFileId = PhotoFileId
         };
     }
 }

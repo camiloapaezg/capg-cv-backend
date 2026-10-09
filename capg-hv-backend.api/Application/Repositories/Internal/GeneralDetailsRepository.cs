@@ -34,7 +34,20 @@ public sealed class GeneralDetailsRepository(ApplicationDbContext context) : IRe
 
     public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.GeneralDetails.AnyAsync(e => e.Id == id, token);
 
-    public async Task<GeneralDetails?> Get(Guid id, CancellationToken token = default) => await _context.GeneralDetails.FindAsync([id], token);
+    public async Task<GeneralDetails?> Get(Guid userId, CancellationToken token = default)
+    {
+        // Gets the user
+        User? user = await _context.Users.FindAsync([userId], token);
+        if (user is null)
+        {
+            return null;
+        }
+
+        // Loads the general details
+        await _context.Entry(user).Reference(u => u.GeneralDetails).LoadAsync(token);
+
+        return user.GeneralDetails;
+    }
 
     public async Task<List<GeneralDetails>> List(Guid? userId = null, CancellationToken token = default) => await _context.GeneralDetails.Where(i => i.UserId == userId).ToListAsync(token);
 

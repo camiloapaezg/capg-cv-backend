@@ -9,6 +9,8 @@ public sealed class CertificationTraining : BaseEntity, ICloneable
     [MaxLength(255)]
     public string? CertificateNumber { get; set; }
 
+    public Guid? FileId { get; set; }
+
     [Required]
     [MaxLength(64)]
     public string FinishedAt { get; set; } = null!;
@@ -37,6 +39,7 @@ public sealed class CertificationTraining : BaseEntity, ICloneable
             CertificateNumber = CertificateNumber,
             FinishedAt = FinishedAt,
             UserId = UserId,
+            FileId = FileId,
         };
     }
 }

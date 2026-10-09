@@ -3,6 +3,7 @@ using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
+using System.Net;
 
 namespace capg_hv_backend.Application.Middlewares;
 
@@ -18,7 +19,7 @@ public static class DependencyInjection
                 BackoffType = DelayBackoffType.Exponential,
                 ShouldHandle = (args) => args.Outcome switch
                 {
-                    { Exception: HttpRequestException } => PredicateResult.True(),
+                    { Exception: HttpRequestException ex } => ex.StatusCode != HttpStatusCode.BadRequest ? PredicateResult.True() : PredicateResult.False(),
                     { Exception: TimeoutRejectedException } => PredicateResult.True(),
                     { Result: HttpResponseMessage response } when !response.IsSuccessStatusCode => PredicateResult.True(),
                     _ => PredicateResult.False(),
