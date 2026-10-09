@@ -4,9 +4,11 @@ using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Repositories.Entities;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
+using capg_hv_backend.Endpoints.Entities;
 using Carter;
 using Carter.ModelBinding;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -49,29 +51,53 @@ public sealed class UserEndpoints : ICarterModule
         // Files
         group.MapGet("{id:guid}/photo", DownloadPhoto)
             .WithDescription("Downloads the user's profile photo")
-            .Produces<User>()
+            .Produces<FileStreamHttpResult>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
     }
 
     private async Task<IResult> Create(
         UserAddValidator validator,
-        [FromBody] User entity,
-        [FromServices] IRepository<User> repository)
+        [FromBody] UserCreateRequestDto request,
+        [FromServices] IRepository<User> usersRepository,
+        [FromServices] IRepository<GeneralDetails> generalDetailsRepository,
+        [FromServices] IRepository<PersonalDetails> personalDetailsRepository)
     {
-        ValidationResult validationResult = validator.Validate(entity);
+        // Validates request
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        User? result = await repository.Create(entity);
-        if (result is null)
+        // Creates the new user
+        User? newUser = new()
+        {
+          FirstName = request.FirstName,
+          LastName = request.LastName,
+          EmailAddress = request.EmailAddress  
+        };
+
+        newUser = await usersRepository.Create(newUser);
+        if (newUser is null)
         {
             return Results.Problem("Error creating entity.", statusCode: 500);
         }
 
-        return Results.Created($"api/v1/users/{result.Id}", result);
+        // Creates General and Project Details
+        var generalDetails = new GeneralDetails()
+        {
+            Title = $"{newUser.FirstName} {newUser.LastName}",
+            UserId = newUser.Id
+        };
+
+        generalDetails = await generalDetailsRepository.Create(generalDetails);
+        if(generalDetails is null)
+        {
+            
+        }
+
+        return Results.Created($"api/v1/users/{newUser.Id}", newUser);
     }
 
     private async Task<IResult> Delete(Guid id,
@@ -151,15 +177,20 @@ public sealed class UserEndpoints : ICarterModule
             return Results.BadRequest("The user does not exist in the database.");
         }
 
+        if(details.PhotoFileId is null)
+        {
+            return Results.BadRequest("The user does not have a profile photo.");
+        }
+
         // Gets the metadata registry
-        FileMetaData? metadata = await metadataRepository.Get(id);
+        FileMetaData? metadata = await metadataRepository.Get(details.PhotoFileId.Value);
         if (metadata is null)
         {
-            return Results.BadRequest("The file is not registered in the database.");
+            return Results.BadRequest("The photo is not registered in the database.");
         }
 
         // Gets the file
-        FileOperationResult<byte[]> downloaded = await filesRepository.Download(id);
+        FileOperationResult<byte[]> downloaded = await filesRepository.Download(metadata.Id);
         if (downloaded.StatusCode != HttpStatusCode.OK || downloaded.Data is null)
         {
             return Results.InternalServerError(downloaded.Message);
