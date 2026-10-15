@@ -21,9 +21,9 @@ public class MessageBrokerShould(InfrastructureFixture fixture)
         TaskCompletionSource<bool> tcs = new();
 
         // Prepares message reception
-        using IMessageBroker receiver = _fixture.TestHost.Services.GetRequiredService<IMessageBroker>();
+        using IMessageBrokerClient receiver = _fixture.TestHost.Services.GetRequiredService<IMessageBrokerClient>();
         Assert.NotNull(receiver);
-        await receiver.RegisterMessageHandler(queueName, async (model, args) =>
+        await receiver.RegisterMessageHandlerAsync(queueName, async (model, args) =>
         {
             byte[] content = args.Body.ToArray();
             FileScanRequestDto? received = JsonSerializer.Deserialize<FileScanRequestDto>(content);
@@ -33,10 +33,10 @@ public class MessageBrokerShould(InfrastructureFixture fixture)
         });
 
         // Sends the message
-        using (IMessageBroker sender = _fixture.TestHost.Services.GetRequiredService<IMessageBroker>())
+        using (IMessageBrokerClient sender = _fixture.TestHost.Services.GetRequiredService<IMessageBrokerClient>())
         {
             Assert.NotNull(sender);
-            await sender.SendMessage(queueName, JsonSerializer.SerializeToUtf8Bytes(sent));
+            await sender.SendMessageAsync(queueName, JsonSerializer.SerializeToUtf8Bytes(sent));
         }
 
         // Awaits for the event to be triggered

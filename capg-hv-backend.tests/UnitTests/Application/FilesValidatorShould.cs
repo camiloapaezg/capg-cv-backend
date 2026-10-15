@@ -36,7 +36,7 @@ public class FilesValidatorShould(ApplicationFixture fixture)
         IFilesValidator sut = _fixture.TestHost.Services.GetRequiredService<IFilesValidator>();
         Assert.NotNull(sut);
 
-        ValidationResult result = await sut.ValidateFileAsync(content, fileName, TestContext.Current.CancellationToken);
+        FileValidationResult result = await sut.ValidateFileAsync(content, fileName, TestContext.Current.CancellationToken);
         Assert.Equal(isValid, result.IsValid);
     }
 }

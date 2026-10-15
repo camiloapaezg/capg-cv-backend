@@ -1,15 +1,16 @@
 using capg_hv_backend.Application;
 using capg_hv_backend.Application.Middlewares;
+using capg_hv_backend.Application.Resiliency;
+using capg_hv_backend.Endpoints;
 using capg_hv_backend.Infrastructure;
-using Carter;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer()
     .AddSwaggerGen()
-    .AddCustomMiddleware()
+    .AddResiliency()
     .AddInfrastructure(builder.Configuration)
     .AddApplication(builder.Configuration)
-    .AddCarter();
+    .AddEndpoints();
 
 WebApplication app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -21,5 +22,5 @@ if (app.Environment.IsDevelopment())
 app.UseCustomMiddleware();
 app.UseInfrastructure();
 app.UseHttpsRedirection();
-app.MapCarter();
+app.UseEndpoints();
 app.Run();

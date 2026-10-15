@@ -20,38 +20,38 @@ public class FilesValidator(IOptions<FileValidationOptions> options) : IFilesVal
         return new string([.. fileName.Where(c => !invalidChars.Contains(c))]);
     }
 
-    public static ValidationResult IsFileTypeValid(byte[] content)
+    public static FileValidationResult IsFileTypeValid(byte[] content)
     {
         if (FileSignaturesHelper.IsImage(content) || FileSignaturesHelper.IsPdf(content))
         {
-            return new ValidationResult();
+            return new FileValidationResult();
         }
 
         if (FileSignaturesHelper.IsExecutable(content) || FileSignaturesHelper.IsScript(content))
         {
-            return new ValidationResult(false, "The file type is invalid.");
+            return new FileValidationResult(false, "The file type is invalid.");
         }
 
-        return new ValidationResult(false, "The file type is not supported.");
+        return new FileValidationResult(false, "The file type is not supported.");
     }
 
-    public async Task<ValidationResult> ValidateFileAsync(byte[] content, string fileName, CancellationToken token = default)
+    public async Task<FileValidationResult> ValidateFileAsync(byte[] content, string fileName, CancellationToken token = default)
     {
         // Checks size
         if (content.Length == 0 || content.Length > _options.MaxSizeInBytes)
         {
-            return new ValidationResult(false, $"The content size cannot be null nor bigger than {_options.MaxSizeInBytes / (1024 * 1024)} Mb");
+            return new FileValidationResult(false, $"The content size cannot be null nor bigger than {_options.MaxSizeInBytes / (1024 * 1024)} Mb");
         }
 
         // Checks file name
         string name = GetSanitizedFileName(fileName);
         if (string.IsNullOrEmpty(name))
         {
-            return new ValidationResult(false, "The file name is not valid");
+            return new FileValidationResult(false, "The file name is not valid");
         }
 
         // Checks file type
-        ValidationResult result = IsFileTypeValid(content);
+        FileValidationResult result = IsFileTypeValid(content);
         if (!result.IsValid)
         {
             return result;
@@ -68,14 +68,14 @@ public class FilesValidator(IOptions<FileValidationOptions> options) : IFilesVal
             }
             catch (TaskCanceledException)
             {
-                return new ValidationResult(false, "The task was cancelled");
+                return new FileValidationResult(false, "The task was cancelled");
             }
             catch (Exception ex)
             {
-                return new ValidationResult(false, "The image is corrupted: " + ex.Message);
+                return new FileValidationResult(false, "The image is corrupted: " + ex.Message);
             }
         }
 
-        return new ValidationResult();
+        return new FileValidationResult();
     }
 }

@@ -1,10 +1,14 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
+using capg_hv_backend.Endpoints.Abstractions;
+using capg_hv_backend.Endpoints.Entities;
 using Carter;
 using Carter.ModelBinding;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace capg_hv_backend.Endpoints.Internal;
 
@@ -15,11 +19,11 @@ public sealed class WorkExperienceEndpoints : ICarterModule
         RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/experience")
             .WithTags("Work Experience");
 
-        group.MapGet("/", GetAll)
+        group.MapGet("/", ReadAll)
             .Produces<List<WorkExperience>>()
             .Produces(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("{id:guid}", Get)
+        group.MapGet("{id:guid}", Read)
             .Produces<WorkExperience>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
@@ -41,84 +45,144 @@ public sealed class WorkExperienceEndpoints : ICarterModule
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status422UnprocessableEntity)
             .Produces(StatusCodes.Status500InternalServerError);
+
+        // Files
+        group.MapGet("{id:guid}/file", DownloadFile)
+            .WithDescription("Downloads the file.")
+            .DisableAntiforgery()
+            .Produces<FileStreamHttpResult>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError);
+
+        group.MapPost("{id:guid}/file", UploadFile)
+            .WithDescription("Uploads a file.")
+            .DisableAntiforgery()
+            .Produces(StatusCodes.Status202Accepted)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError);
     }
 
     private async Task<IResult> Create(
         Guid userId,
-        WorkExperienceAddValidator validator,
-        [FromBody] WorkExperience entity,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<WorkExperience> experienceRepo)
+        WorkExperienceValidator validator,
+        [FromBody] WorkExperienceDto request,
+        [FromServices] IListableRepository<User> usersRepository,
+        [FromServices] IListableRepository<WorkExperience> experienceRepository)
     {
-        ValidationResult validationResult = validator.Validate(entity);
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        User? user = await usersRepository.ReadAsync(userId);
+        if (user is null)
         {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+            return Results.BadRequest($"The user with Id '{userId}' does not exist in database.");
         }
 
-        WorkExperience newEntity = (WorkExperience)entity.Clone();
-        newEntity.UserId = userId;
-
-        WorkExperience? result = await experienceRepo.Create(newEntity);
-        if (result is null)
+        WorkExperience? newEntity = new()
         {
-            return Results.Problem("Error creating entity.", statusCode: 500);
+            JobTitle = request.JobTitle,
+            Company = request.Company,
+            Location = request.Location,
+            Description = request.Description,
+            From = request.From,
+            Until = request.Until,
+            ContactName = request.ContactName,
+            ContactNumber = request.ContactNumber,
+            UserId = user.Id
+        };
+
+        newEntity = await experienceRepository.CreateAsync(newEntity);
+        if (newEntity is null)
+        {
+            return Results.InternalServerError($"Error creating work experience entry for the user with Id '{userId}'.");
         }
 
-        return Results.Created($"api/v1/users/{userId}/experience/{result.Id}", result);
+        return Results.Created($"api/v1/users/{userId}/experience/{newEntity.Id}", newEntity);
     }
 
     private async Task<IResult> Delete(
         Guid userId,
         Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<WorkExperience> experienceRepo)
+        [FromServices] IListableRepository<WorkExperience> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        WorkExperience? entry = await repository.ReadAsync(id);
+        if (entry is null)
         {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+            return Results.BadRequest($"The work experience entry with Id '{id}' related to the user with Id '{userId}' was not found.");
         }
 
-        WorkExperience? result = await experienceRepo.Delete(id);
+        if (entry.UserId != userId)
+        {
+            return Results.BadRequest("The work experience entry user Id does not correspond to the one read from the request.");
+        }
+
+        WorkExperience? result = await repository.DeleteAsync(id);
         if (result is null)
         {
-            return Results.BadRequest($"Error deleting entity with Id '{id}'");
+            return Results.InternalServerError($"Error deleting work experience entry with Id '{id}' related to the user with id '{userId}'.");
         }
 
         return Results.NoContent();
     }
 
-    private async Task<IResult> Get(
+    private async Task<IResult> DownloadFile(
         Guid userId,
         Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<WorkExperience> experienceRepo)
+        [FromServices] IFilesStorageOperations _fileStorageOps,
+        [FromServices] IListableRepository<WorkExperience> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        // Validates entity
+        WorkExperience? entry = await repository.ReadAsync(id);
+        if (entry is null)
         {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+            return Results.BadRequest($"The work experience entry with Id '{id}', belonging to the user with Id '{userId}' was not found.");
         }
 
-        WorkExperience? result = await experienceRepo.Get(id);
-        if (result is null)
+        if (entry.UserId != userId)
         {
-            return Results.BadRequest("The entity does not exist in the database.");
+            return Results.BadRequest("The work experience entry user Id does not correspond to the one read from the request.");
         }
 
-        return Results.Ok(result);
+        if (entry.FileId is null)
+        {
+            return Results.BadRequest($"There is no file attached to the work experience entry with Id '{id}'.");
+        }
+
+        // Downloads the file.
+        FileHttpOperationResultDto<FileDownloadResultDto> result = await _fileStorageOps.DownloadFileAsync(entry.FileId.Value);
+        if (result.Status != HttpStatusCode.OK || result.Value is null)
+        {
+            return Results.Problem(statusCode: (int)result.Status, detail: result.Message);
+        }
+
+        return TypedResults.File(fileStream: new MemoryStream(result.Value.Data), contentType: "application/octet-stream", fileDownloadName: result.Value.FileName);
     }
 
-    private async Task<IResult> GetAll(
+    private async Task<IResult> Read(
         Guid userId,
-        [FromServices] IRepository<WorkExperience> repository)
+        Guid id,
+        [FromServices] IListableRepository<WorkExperience> repository)
+    {
+        WorkExperience? existing = await repository.ReadAsync(id);
+        if (existing is null)
+        {
+            return Results.BadRequest($"The work experience entry with Id '{id}', belonging to the user with Id '{userId}' was not found.");
+        }
+
+        if (existing.UserId != userId)
+        {
+            return Results.BadRequest("The work experience entry user Id does not correspond to the one read from the request.");
+        }
+
+        return Results.Ok(existing);
+    }
+
+    private async Task<IResult> ReadAll(
+        Guid userId,
+        [FromServices] IListableRepository<WorkExperience> repository)
     {
         List<WorkExperience> list = await repository.List(userId);
         return Results.Ok(list);
@@ -127,30 +191,85 @@ public sealed class WorkExperienceEndpoints : ICarterModule
     private async Task<IResult> Update(
         Guid userId,
         Guid id,
-        WorkExperienceUpdateValidator validator,
-        [FromBody] WorkExperience entity,
-        [FromServices] IRepository<WorkExperience> repository)
+        WorkExperienceValidator validator,
+        [FromBody] WorkExperienceDto request,
+        [FromServices] IListableRepository<WorkExperience> repository)
     {
-        if (id != entity.Id)
-        {
-            return Results.BadRequest("The route Id is not the same as the entity Id");
-        }
-
-        ValidationResult validationResult = validator.Validate(entity);
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        WorkExperience newEntity = (WorkExperience)entity.Clone();
-        newEntity.UserId = userId;
-
-        WorkExperience? result = await repository.Update(newEntity);
-        if (result is null)
+        WorkExperience? existing = await repository.ReadAsync(id);
+        if (existing is null)
         {
-            return Results.BadRequest($"Error updating the entity with the Id '{id}'.");
+            return Results.BadRequest($"The work experience entry with Id '{id}', belonging to the user with Id '{userId}' was not found.");
+        }
+
+        if (existing.UserId != userId)
+        {
+            return Results.BadRequest("The work experience entry user Id does not correspond to the one read from the request.");
+        }
+
+        WorkExperience? newEntity = (WorkExperience)existing.Clone();
+        newEntity.JobTitle = request.JobTitle;
+        newEntity.Company = request.Company;
+        newEntity.Location = request.Location;
+        newEntity.Description = request.Description;
+        newEntity.From = request.From;
+        newEntity.Until = request.Until;
+        newEntity.ContactName = request.ContactName;
+        newEntity.ContactNumber = request.ContactNumber;
+
+        newEntity = await repository.UpdateAsync(newEntity);
+        if (newEntity is null)
+        {
+            return Results.InternalServerError($"Error updating the work experience entry with the Id '{id}' related to the user with Id '{userId}'.");
         }
 
         return Results.NoContent();
+    }
+
+    private async Task<IResult> UploadFile(
+        Guid userId,
+        Guid id,
+        IFormFile file,
+        [FromServices] IFilesStorageOperations _fileStorageOps,
+        [FromServices] IListableRepository<WorkExperience> repository)
+    {
+        if (file is null)
+        {
+            return Results.BadRequest("There is no file attached to the request.");
+        }
+
+        // Validates id
+        WorkExperience? existing = await repository.ReadAsync(id);
+        if (existing is null)
+        {
+            return Results.BadRequest($"The work experience entry with Id '{id}' related to the user with Id '{userId}' was not found.");
+        }
+
+        if (existing.UserId != userId)
+        {
+            return Results.BadRequest("The work experience entry user Id does not correspond to the one read from the request.");
+        }
+
+        // Starts file upload.
+        FileHttpOperationResultDto<FileScanRequestDto> result = await _fileStorageOps.StartUploadFileAsync(userId, file);
+        if (result.Status != HttpStatusCode.Accepted || result.Value is null)
+        {
+            return Results.Problem(statusCode: (int)result.Status, detail: result.Message);
+        }
+
+        // Updates the file Id in the entry.
+        existing.FileId = result.Value.Id;
+        existing = await repository.UpdateAsync(existing);
+        if (existing is null)
+        {
+            return Results.InternalServerError($"Error updating the FileId of the work experience entry with Id '{id}'.");
+        }
+
+        return Results.Accepted();
     }
 }

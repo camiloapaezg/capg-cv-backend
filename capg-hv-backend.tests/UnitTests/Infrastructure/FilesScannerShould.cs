@@ -15,7 +15,7 @@ public class FilesScannerShould(InfrastructureFixture fixture)
     [Fact]
     public async Task ScanIECAR_ReturnRejected()
     {
-        IFilesScanner sut = _fixture.TestHost.Services.GetRequiredService<IFilesScanner>();
+        IFilesScannerClient sut = _fixture.TestHost.Services.GetRequiredService<IFilesScannerClient>();
         Assert.NotNull(sut);
 
         string iecar = @"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
@@ -23,17 +23,17 @@ public class FilesScannerShould(InfrastructureFixture fixture)
         string base64 = Convert.ToBase64String(content);
         content = Convert.FromBase64String(base64);
 
-        FileScanResult result = await sut.ScanAsync(content);
+        FileScanResult result = await sut.ScanAsync(content, TestContext.Current.CancellationToken);
         Assert.Equal(FileScanStatus.Rejected, result.Status);
     }
 
     [Fact]
     public async Task ScanPDF_ReturnClean()
     {
-        IFilesScanner sut = _fixture.TestHost.Services.GetRequiredService<IFilesScanner>();
+        IFilesScannerClient sut = _fixture.TestHost.Services.GetRequiredService<IFilesScannerClient>();
         Assert.NotNull(sut);
 
-        FileScanResult result = await sut.ScanAsync(TestFiles.PDF);
+        FileScanResult result = await sut.ScanAsync(TestFiles.PDF, TestContext.Current.CancellationToken);
         Assert.Equal(FileScanStatus.Clean, result.Status);
     }
 }

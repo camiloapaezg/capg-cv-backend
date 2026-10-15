@@ -1,8 +1,9 @@
 ﻿using capg_hv_backend.Application.FilesValidator;
 using capg_hv_backend.Application.Repositories;
 using capg_hv_backend.Domain.Entities;
-using capg_hv_backend.Infrastructure.Persistence;
-using capg_hv_backend.Infrastructure.Persistence.Internal;
+using capg_hv_backend.Infrastructure.Database;
+using capg_hv_backend.Infrastructure.Database.Internal;
+using capg_hv_backend.Infrastructure.FileStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,7 +43,8 @@ public class ApplicationFixture : IAsyncLifetime
                 .ConfigureServices((context, services) =>
                 {
                     services.AddLogging()
-                    .AddPersistence(context.Configuration)
+                    .AddDatabase(context.Configuration)
+                    .AddFileStorage(context.Configuration)
                     .AddRepositories(context.Configuration)
                     .AddFilesValidator(context.Configuration);
                 });

@@ -21,16 +21,16 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_publication);
-        IRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
+        IListableRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IListableRepository<Publication>>();
         Assert.NotNull(sut);
 
         // Creates
-        Publication? created = await sut.Create(_publication, TestContext.Current.CancellationToken);
-        Assert.NotNull(created);
+        Publication? entity = await sut.CreateAsync(_publication, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
-        Assert.True(exists);
+        entity = await sut.ReadAsync(entity.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         List<Publication> all = await sut.List(_publication.UserId, TestContext.Current.CancellationToken);
         Assert.Single(all);
@@ -43,20 +43,20 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_publication);
-        IRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
+        IListableRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IListableRepository<Publication>>();
         Assert.NotNull(sut);
-        Publication? deleted = await sut.Create(_publication, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
+        Publication? entity = await sut.CreateAsync(_publication, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
+        entity = await sut.ReadAsync(entity.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
+        entity = await sut.DeleteAsync(entity.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.False(exists);
+        entity = await sut.ReadAsync(entity.Id, TestContext.Current.CancellationToken);
+        Assert.Null(entity);
     }
 
     [Fact]
@@ -66,22 +66,22 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_publication);
-        IRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<Publication>>();
+        IListableRepository<Publication> sut = _fixture.TestHost.Services.GetRequiredService<IListableRepository<Publication>>();
         Assert.NotNull(sut);
-        Publication? updated = await sut.Create(_publication, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        Publication? entity = await sut.CreateAsync(_publication, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Updates.
-        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        entity = await sut.ReadAsync(entity.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         string edit = "Edited";
-        updated.Location = new string(edit);
-        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        entity.Location = edit;
+        entity = await sut.UpdateAsync(entity, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts.
-        Publication? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
+        Publication? existing = await sut.ReadAsync(entity.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Location);
     }
@@ -89,8 +89,8 @@ public class PublicationRepositoryShould(ApplicationFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
-        _user = await usersRepo.Create(ApplicationFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
+        IListableRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IListableRepository<User>>();
+        _user = await usersRepo.CreateAsync(ApplicationFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _publication = new Publication()
         {
             Title = "Publication Title",

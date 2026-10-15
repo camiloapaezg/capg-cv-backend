@@ -21,19 +21,16 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_generalDetails);
-        IRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
+        ICrudRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<ICrudRepository<GeneralDetails>>();
         Assert.NotNull(sut);
 
         // Creates
-        GeneralDetails? created = await sut.Create(_generalDetails, TestContext.Current.CancellationToken);
-        Assert.NotNull(created);
+        GeneralDetails? entity = await sut.CreateAsync(_generalDetails, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
-        Assert.True(exists);
-
-        List<GeneralDetails> all = await sut.List(_generalDetails.UserId, TestContext.Current.CancellationToken);
-        Assert.Single(all);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
     }
 
     [Fact]
@@ -43,20 +40,20 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_generalDetails);
-        IRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
+        ICrudRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<ICrudRepository<GeneralDetails>>();
         Assert.NotNull(sut);
-        GeneralDetails? deleted = await sut.Create(_generalDetails, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
+        GeneralDetails? entity = await sut.CreateAsync(_generalDetails, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
+        entity = await sut.DeleteAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.False(exists);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.Null(entity);
     }
 
     [Fact]
@@ -66,22 +63,22 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_generalDetails);
-        IRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<GeneralDetails>>();
+        ICrudRepository<GeneralDetails> sut = _fixture.TestHost.Services.GetRequiredService<ICrudRepository<GeneralDetails>>();
         Assert.NotNull(sut);
-        GeneralDetails? updated = await sut.Create(_generalDetails, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        GeneralDetails? entity = await sut.CreateAsync(_generalDetails, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Updates.
-        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         string edit = "Edited";
-        updated.Description = new string(edit);
-        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        entity.Description = new string(edit);
+        entity = await sut.UpdateAsync(entity, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts.
-        GeneralDetails? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
+        GeneralDetails? existing = await sut.ReadAsync(entity.UserId, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Description);
     }
@@ -89,8 +86,8 @@ public class GeneralDetailsRepositoryShould(ApplicationFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
-        _user = await usersRepo.Create(ApplicationFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
+        IListableRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IListableRepository<User>>();
+        _user = await usersRepo.CreateAsync(ApplicationFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _generalDetails = new GeneralDetails()
         {
             UserId = _user.Id,

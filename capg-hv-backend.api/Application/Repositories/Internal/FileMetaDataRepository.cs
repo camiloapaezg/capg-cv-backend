@@ -1,16 +1,16 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
-using capg_hv_backend.Infrastructure.Persistence.Internal;
+using capg_hv_backend.Infrastructure.Database.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
-public sealed class FileMetaDataRepository(ApplicationDbContext context) : IRepository<FileMetaData>
+public sealed class FileMetaDataRepository(ApplicationDbContext context) : IListableRepository<FileMetaData>
 {
     private readonly ApplicationDbContext _context = context;
 
-    public async Task<FileMetaData?> Create(FileMetaData entity, CancellationToken token = default)
+    public async Task<FileMetaData?> CreateAsync(FileMetaData entity, CancellationToken token = default)
     {
         FileMetaData newEntity = (FileMetaData)entity.Clone();
         newEntity.ModifiedAt = DateTime.UtcNow;
@@ -21,9 +21,9 @@ public sealed class FileMetaDataRepository(ApplicationDbContext context) : IRepo
         return result?.Entity;
     }
 
-    public async Task<FileMetaData?> Delete(Guid id, CancellationToken token = default)
+    public async Task<FileMetaData?> DeleteAsync(Guid id, CancellationToken token = default)
     {
-        FileMetaData? existing = await Get(id, token);
+        FileMetaData? existing = await ReadAsync(id, token);
         if (existing is null)
         {
             return null;
@@ -35,15 +35,23 @@ public sealed class FileMetaDataRepository(ApplicationDbContext context) : IRepo
         return existing;
     }
 
-    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.FileMetaData.AnyAsync(e => e.Id == id, token);
-
-    public async Task<FileMetaData?> Get(Guid id, CancellationToken token = default) => await _context.FileMetaData.FindAsync([id], token);
-
-    public async Task<List<FileMetaData>> List(Guid? ownerId = null, CancellationToken token = default) => await _context.FileMetaData.Where(e => e.OwnerId == ownerId).ToListAsync(token);
-
-    public async Task<FileMetaData?> Update(FileMetaData entity, CancellationToken token = default)
+    public async Task<List<FileMetaData>> List(Guid? userId = null, CancellationToken token = default)
     {
-        FileMetaData? existing = await Get(entity.Id, token);
+        User? user = await _context.Users.FindAsync([userId], token);
+        if (user is null)
+        {
+            return [];
+        }
+
+        await _context.Entry(user).Collection(u => u.Files).LoadAsync(token);
+        return [.. user.Files];
+    }
+
+    public async Task<FileMetaData?> ReadAsync(Guid id, CancellationToken token = default) => await _context.FileMetaData.FindAsync([id], token);
+
+    public async Task<FileMetaData?> UpdateAsync(FileMetaData entity, CancellationToken token = default)
+    {
+        FileMetaData? existing = await ReadAsync(entity.Id, token);
         if (existing is null)
         {
             return null;

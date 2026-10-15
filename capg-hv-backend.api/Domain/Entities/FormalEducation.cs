@@ -16,8 +16,8 @@ public sealed class FormalEducation : BaseEntity, ICloneable
     public string? EndDate { get; set; } = null!;
 
     [Required]
-    [MaxLength(255)]
-    public string School { get; set; } = null!;
+    [MaxLength(64)]
+    public string Institution { get; set; } = null!;
 
     [Required]
     [MaxLength(64)]
@@ -34,7 +34,7 @@ public sealed class FormalEducation : BaseEntity, ICloneable
         return new FormalEducation()
         {
             Id = Id,
-            School = School,
+            Institution = Institution,
             Degree = Degree,
             StartDate = StartDate,
             EndDate = EndDate,

@@ -1,4 +1,5 @@
-﻿using Amazon.S3.Model;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
 using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Repositories.Entities;
 using capg_hv_backend.tests.Fixtures;
@@ -22,17 +23,17 @@ public class FilesRepositoryShould(ApplicationFixture fixture)
         // Uploads
         Guid fileId = Guid.NewGuid();
         using MemoryStream stream = new(TestFiles.JPG);
-        FileOperationResult<string> uploadResult = await sut.Upload(fileId, stream, TestContext.Current.CancellationToken);
+        FileOperationResult<string> uploadResult = await sut.UploadAsync(fileId, stream, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, uploadResult.StatusCode);
         Assert.NotNull(uploadResult.Data);
 
         // Gets info
-        FileOperationResult<GetObjectMetadataResponse> getInfoResult = await sut.GetMetadata(fileId);
+        FileOperationResult<GetObjectMetadataResponse> getInfoResult = await sut.GetMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, getInfoResult.StatusCode);
         Assert.True(getInfoResult.Data is not null);
 
         // Downloads
-        FileOperationResult<byte[]> downloadResult = await sut.Download(fileId, TestContext.Current.CancellationToken);
+        FileOperationResult<byte[]> downloadResult = await sut.DownloadAsync(fileId, TestContext.Current.CancellationToken);
         if (downloadResult?.Data is null)
         {
             Assert.Fail("The result does not contain data");
@@ -42,11 +43,10 @@ public class FilesRepositoryShould(ApplicationFixture fixture)
         Assert.Equal(TestFiles.JPG, downloadResult.Data);
 
         // Deletes
-        FileOperationResult<object> deleteResult = await sut.Delete(fileId, TestContext.Current.CancellationToken);
+        FileOperationResult<object> deleteResult = await sut.DeleteAsync(fileId, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, deleteResult.StatusCode);
 
-        // Checkes
-        getInfoResult = await sut.GetMetadata(fileId);
-        Assert.Equal(HttpStatusCode.NotFound, getInfoResult.StatusCode);
+        // Checks that the file does not exist anymore
+        await Assert.ThrowsAsync<AmazonS3Exception>(async () => await sut.GetMetadataAsync(fileId, TestContext.Current.CancellationToken));
     }
 }

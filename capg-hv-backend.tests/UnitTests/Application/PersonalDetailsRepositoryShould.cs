@@ -21,19 +21,16 @@ public class PersonalDetailsRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_personalDetails);
-        IRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        ICrudRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<ICrudRepository<PersonalDetails>>();
         Assert.NotNull(sut);
 
         // Creates
-        PersonalDetails? created = await sut.Create(_personalDetails, TestContext.Current.CancellationToken);
-        Assert.NotNull(created);
+        PersonalDetails? entity = await sut.CreateAsync(_personalDetails, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts.
-        bool exists = await sut.Exists(created.Id, TestContext.Current.CancellationToken);
-        Assert.True(exists);
-
-        List<PersonalDetails> all = await sut.List(_personalDetails.UserId, TestContext.Current.CancellationToken);
-        Assert.Single(all);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
     }
 
     [Fact]
@@ -43,20 +40,20 @@ public class PersonalDetailsRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_personalDetails);
-        IRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        ICrudRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<ICrudRepository<PersonalDetails>>();
         Assert.NotNull(sut);
-        PersonalDetails? deleted = await sut.Create(_personalDetails, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
-        deleted = await sut.Get(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
+        PersonalDetails? entity = await sut.CreateAsync(_personalDetails, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Deletes
-        deleted = await sut.Delete(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(deleted);
+        entity = await sut.DeleteAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts
-        bool exists = await sut.Exists(deleted.Id, TestContext.Current.CancellationToken);
-        Assert.False(exists);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.Null(entity);
     }
 
     [Fact]
@@ -66,22 +63,22 @@ public class PersonalDetailsRepositoryShould(ApplicationFixture fixture)
         await CreateTestEntities();
         Assert.NotNull(_user);
         Assert.NotNull(_personalDetails);
-        IRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<IRepository<PersonalDetails>>();
+        ICrudRepository<PersonalDetails> sut = _fixture.TestHost.Services.GetRequiredService<ICrudRepository<PersonalDetails>>();
         Assert.NotNull(sut);
-        PersonalDetails? updated = await sut.Create(_personalDetails, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        PersonalDetails? entity = await sut.CreateAsync(_personalDetails, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Updates.
-        updated = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        entity = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         string edit = "Edited";
-        updated.Nationality = new string(edit);
-        updated = await sut.Update(updated, TestContext.Current.CancellationToken);
-        Assert.NotNull(updated);
+        entity.Nationality = edit;
+        entity = await sut.UpdateAsync(entity, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
 
         // Asserts.
-        PersonalDetails? existing = await sut.Get(updated.Id, TestContext.Current.CancellationToken);
+        PersonalDetails? existing = await sut.ReadAsync(_user.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(existing);
         Assert.Equal(edit, existing.Nationality);
     }
@@ -89,13 +86,14 @@ public class PersonalDetailsRepositoryShould(ApplicationFixture fixture)
     private async Task CreateTestEntities()
     {
         // Initializes entities
-        IRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IRepository<User>>();
-        _user = await usersRepo.Create(ApplicationFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
+        IListableRepository<User> usersRepo = _fixture.TestHost.Services.GetRequiredService<IListableRepository<User>>();
+        _user = await usersRepo.CreateAsync(ApplicationFixture.DefaultUser) ?? throw new ArgumentNullException(nameof(_user));
         _personalDetails = new PersonalDetails()
         {
             UserId = _user.Id,
             Nationality = "Colombian",
             TelephoneNumber = "123456789",
+            Location = "Augsburg",
             BirthDate = new DateTime(1988, 7, 3).ToUniversalTime()
         };
     }

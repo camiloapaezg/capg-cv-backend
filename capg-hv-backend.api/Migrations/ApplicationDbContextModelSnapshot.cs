@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using capg_hv_backend.Infrastructure.Persistence.Internal;
+using capg_hv_backend.Infrastructure.Database.Internal;
 
 #nullable disable
 
@@ -78,13 +78,15 @@ namespace capg_hv_backend.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid");
-
                     b.Property<long>("SizeInBytes")
                         .HasColumnType("bigint");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("FileMetaData");
                 });
@@ -107,10 +109,10 @@ namespace capg_hv_backend.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("School")
+                    b.Property<string>("Institution")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("StartDate")
                         .IsRequired()
@@ -171,13 +173,15 @@ namespace capg_hv_backend.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Location")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Nationality")
-                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
                     b.Property<string>("TelephoneNumber")
-                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
@@ -316,6 +320,17 @@ namespace capg_hv_backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("capg_hv_backend.Domain.Entities.FileMetaData", b =>
+                {
+                    b.HasOne("capg_hv_backend.Domain.Entities.User", "User")
+                        .WithMany("Files")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("capg_hv_backend.Domain.Entities.FormalEducation", b =>
                 {
                     b.HasOne("capg_hv_backend.Domain.Entities.User", "User")
@@ -376,6 +391,8 @@ namespace capg_hv_backend.Migrations
                     b.Navigation("CertificationTraining");
 
                     b.Navigation("Education");
+
+                    b.Navigation("Files");
 
                     b.Navigation("GeneralDetails");
 

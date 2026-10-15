@@ -8,18 +8,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddRepositories(this IServiceCollection services, IConfiguration configuration)
     {
-        // Entities repositories
-        services.AddTransient<IRepository<User>, UsersRepository>();
-        services.AddTransient<IRepository<PersonalDetails>, PersonalDetailsRepository>();
-        services.AddTransient<IRepository<GeneralDetails>, GeneralDetailsRepository>();
-        services.AddTransient<IRepository<CertificationTraining>, CertificationTrainingRepository>();
-        services.AddTransient<IRepository<FormalEducation>, FormalEducationRepository>();
-        services.AddTransient<IRepository<Publication>, PublicationRepository>();
-        services.AddTransient<IRepository<WorkExperience>, WorkExperienceRepository>();
-        services.AddTransient<IRepository<FileMetaData>, FileMetaDataRepository>();
+        // Adds options
+        services.Configure<RepositoriesOptions>(configuration.GetSection(nameof(RepositoriesOptions)));
 
-        // File storage repository
-        services.Configure<FileStorageOptions>(configuration.GetSection(nameof(FileStorageOptions)));
+        // Entities repositories
+        services.AddTransient<IListableRepository<User>, UsersRepository>();
+        services.AddTransient<ICrudRepository<PersonalDetails>, PersonalDetailsRepository>();
+        services.AddTransient<ICrudRepository<GeneralDetails>, GeneralDetailsRepository>();
+        services.AddTransient<IListableRepository<CertificationTraining>, CertificationTrainingRepository>();
+        services.AddTransient<IListableRepository<FormalEducation>, FormalEducationRepository>();
+        services.AddTransient<IListableRepository<Publication>, PublicationRepository>();
+        services.AddTransient<IListableRepository<WorkExperience>, WorkExperienceRepository>();
+        services.AddTransient<IListableRepository<FileMetaData>, FileMetaDataRepository>();
+
+        // Files storage repository
         services.AddTransient<IFilesRepository, FilesRepository>();
 
         return services;

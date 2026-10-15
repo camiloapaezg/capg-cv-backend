@@ -1,6 +1,7 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
+using capg_hv_backend.Endpoints.Entities;
 using Carter;
 using Carter.ModelBinding;
 using FluentValidation.Results;
@@ -15,11 +16,11 @@ public sealed class PublicationEndpoints : ICarterModule
         RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/publication")
             .WithTags("Publications");
 
-        group.MapGet("/", GetAll)
+        group.MapGet("/", ReadAll)
             .Produces<List<Publication>>()
             .Produces(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("{id:guid}", Get)
+        group.MapGet("{id:guid}", Read)
             .Produces<Publication>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
@@ -45,80 +46,89 @@ public sealed class PublicationEndpoints : ICarterModule
 
     private async Task<IResult> Create(
         Guid userId,
-        PublicationAddValidator validator,
-        [FromBody] Publication entity,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<Publication> publicationRepo)
+        PublicationValidator validator,
+        [FromBody] PublicationDto request,
+        [FromServices] IListableRepository<User> userRepository,
+        [FromServices] IListableRepository<Publication> publicationRepository)
     {
-        ValidationResult validationResult = validator.Validate(entity);
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        User? user = await userRepository.ReadAsync(userId);
+        if (user is null)
         {
             return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
         }
 
-        Publication newEntity = (Publication)entity.Clone();
-        newEntity.UserId = userId;
-
-        Publication? result = await publicationRepo.Create(newEntity);
-        if (result is null)
+        Publication? newEntity = new()
         {
-            return Results.Problem("Error creating entity.", statusCode: 500);
+            Title = request.Title,
+            Type = request.Type,
+            Location = request.Location,
+            PublishedAt = request.PublishedAt,
+            Doi = request.Doi,
+            UserId = user.Id,
+        };
+
+        newEntity = await publicationRepository.CreateAsync(newEntity);
+        if (newEntity is null)
+        {
+            return Results.InternalServerError($"Error creating publication entry for the user with Id '{userId}'.");
         }
 
-        return Results.Created($"api/v1/users/{userId}/publication/{result.Id}", result);
+        return Results.Created($"api/v1/users/{userId}/publication/{newEntity.Id}", newEntity);
     }
 
     private async Task<IResult> Delete(
         Guid userId,
         Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<Publication> publicationRepo)
+        [FromServices] IListableRepository<Publication> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        Publication? entry = await repository.ReadAsync(id);
+        if (entry is null)
         {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+            return Results.BadRequest($"The publication entry with Id '{id}', belonging to the user with Id '{userId}' was not found.");
         }
 
-        Publication? result = await publicationRepo.Delete(id);
-        if (result is null)
+        if (entry.UserId != userId)
         {
-            return Results.BadRequest($"Error deleting entity with Id '{id}'");
+            return Results.BadRequest("The publication entry user Id does not correspond to the one read from the request.");
+        }
+
+        entry = await repository.DeleteAsync(id);
+        if (entry is null)
+        {
+            return Results.InternalServerError($"Error deleting publication entry with Id '{id}' related to the user with id '{userId}'");
         }
 
         return Results.NoContent();
     }
 
-    private async Task<IResult> Get(
+    private async Task<IResult> Read(
         Guid userId,
         Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<Publication> publicationRepo)
+        [FromServices] IListableRepository<Publication> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
-        {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
-        }
-
-        Publication? result = await publicationRepo.Get(id);
-        if (result is null)
+        Publication? existing = await repository.ReadAsync(id);
+        if (existing is null)
         {
             return Results.BadRequest("The entity does not exist in the database.");
         }
 
-        return Results.Ok(result);
+        if (existing.UserId != userId)
+        {
+            return Results.BadRequest("The entry user Id does not correspond to the one read from the request.");
+        }
+
+        return Results.Ok(existing);
     }
 
-    private async Task<IResult> GetAll(
+    private async Task<IResult> ReadAll(
         Guid userId,
-        [FromServices] IRepository<Publication> repository)
+        [FromServices] IListableRepository<Publication> repository)
     {
         List<Publication> list = await repository.List(userId);
         return Results.Ok(list);
@@ -127,28 +137,39 @@ public sealed class PublicationEndpoints : ICarterModule
     private async Task<IResult> Update(
         Guid userId,
         Guid id,
-        PublicationUpdateValidator validator,
-        [FromBody] Publication entity,
-        [FromServices] IRepository<Publication> repository)
+        PublicationValidator validator,
+        [FromBody] PublicationDto request,
+        [FromServices] IListableRepository<Publication> repository)
     {
-        if (id != entity.Id)
-        {
-            return Results.BadRequest("The route Id is not the same as the entity Id");
-        }
-
-        ValidationResult validationResult = validator.Validate(entity);
+        // Validates request.
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        Publication newEntity = (Publication)entity.Clone();
-        newEntity.UserId = userId;
-
-        Publication? result = await repository.Update(newEntity);
-        if (result is null)
+        Publication? existing = await repository.ReadAsync(id);
+        if (existing is null)
         {
-            return Results.BadRequest($"Error updating the entity with the Id '{id}'.");
+            return Results.BadRequest("The entity does not exist in the database.");
+        }
+
+        if (existing.UserId != userId)
+        {
+            return Results.BadRequest("The entry user Id does not correspond to the one read from the request.");
+        }
+
+        Publication? newEntity = (Publication)existing.Clone();
+        newEntity.Title = request.Title;
+        newEntity.Type = request.Type;
+        newEntity.Location = request.Location;
+        newEntity.PublishedAt = request.PublishedAt;
+        newEntity.Doi = request.Doi;
+
+        newEntity = await repository.UpdateAsync(newEntity);
+        if (newEntity is null)
+        {
+            return Results.InternalServerError($"Error updating the publication entry with the Id '{id}'.");
         }
 
         return Results.NoContent();

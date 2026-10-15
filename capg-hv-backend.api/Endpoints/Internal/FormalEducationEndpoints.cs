@@ -1,6 +1,7 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
+using capg_hv_backend.Endpoints.Entities;
 using Carter;
 using Carter.ModelBinding;
 using FluentValidation.Results;
@@ -45,51 +46,63 @@ public sealed class FormalEducationEndpoints : ICarterModule
 
     private async Task<IResult> Create(
         Guid userId,
-        FormalEducationAddValidator validator,
-        [FromBody] FormalEducation entity,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<FormalEducation> educationRepo)
+        FormalEducationValidator validator,
+        [FromBody] FormalEducationDto request,
+        [FromServices] IListableRepository<User> userRepository,
+        [FromServices] IListableRepository<FormalEducation> educationRepository)
     {
-        ValidationResult validationResult = validator.Validate(entity);
+        // Validates request.
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        User? user = await userRepository.ReadAsync(userId);
+        if (user is null)
         {
             return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
         }
 
-        FormalEducation newEntity = (FormalEducation)entity.Clone();
-        newEntity.UserId = userId;
-
-        FormalEducation? result = await educationRepo.Create(newEntity);
-        if (result is null)
+        // Prepares and creates entry
+        FormalEducation? newEntity = new()
         {
-            return Results.Problem("Error creating entity.", statusCode: 500);
+            Degree = request.Degree,
+            Institution = request.Institution,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            Description = request.Description
+        };
+
+        newEntity = await educationRepository.CreateAsync(newEntity);
+        if (newEntity is null)
+        {
+            return Results.InternalServerError($"Error creating formal education entry for the user with Id '{userId}'.");
         }
 
-        return Results.Created($"api/v1/users/{userId}/education/{result.Id}", result);
+        return Results.Created($"api/v1/users/{userId}/education/{newEntity.Id}", newEntity);
     }
 
     private async Task<IResult> Delete(
         Guid userId,
         Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<FormalEducation> educationRepo)
+        [FromServices] IListableRepository<FormalEducation> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        FormalEducation? entry = await repository.ReadAsync(id);
+        if (entry is null)
         {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+            return Results.BadRequest($"The formal education entry with Id '{id}' related to the user with Id '{userId}' was not found.");
         }
 
-        FormalEducation? result = await educationRepo.Delete(id);
+        if (entry.UserId != userId)
+        {
+            return Results.BadRequest("The formal education entry user Id does not correspond to the one read from the request.");
+        }
+
+        FormalEducation? result = await repository.DeleteAsync(id);
         if (result is null)
         {
-            return Results.BadRequest($"Error deleting entity with Id '{id}'");
+            return Results.InternalServerError($"Error deleting formal education entry with Id '{id}' related to the user with id '{userId}'.");
         }
 
         return Results.NoContent();
@@ -98,27 +111,25 @@ public sealed class FormalEducationEndpoints : ICarterModule
     private async Task<IResult> Get(
         Guid userId,
         Guid id,
-        [FromServices] IRepository<User> usersRepo,
-        [FromServices] IRepository<FormalEducation> educationRepo)
+        [FromServices] IListableRepository<FormalEducation> repository)
     {
-        bool exists = await usersRepo.Exists(userId);
-        if (!exists)
+        FormalEducation? existing = await repository.ReadAsync(id);
+        if (existing is null)
         {
-            return Results.BadRequest($"The user with Id '{userId}' does not exist in database");
+            return Results.BadRequest($"The formal education entry with Id '{id}' related to the user with Id '{userId}' was not found.");
         }
 
-        FormalEducation? result = await educationRepo.Get(id);
-        if (result is null)
+        if (existing.UserId != userId)
         {
-            return Results.BadRequest("The entity does not exist in the database.");
+            return Results.BadRequest("The entry user Id does not correspond to the one read from the request.");
         }
 
-        return Results.Ok(result);
+        return Results.Ok(existing);
     }
 
     private async Task<IResult> GetAll(
         Guid userId,
-        [FromServices] IRepository<FormalEducation> repository)
+        [FromServices] IListableRepository<FormalEducation> repository)
     {
         List<FormalEducation> list = await repository.List(userId);
         return Results.Ok(list);
@@ -127,28 +138,38 @@ public sealed class FormalEducationEndpoints : ICarterModule
     private async Task<IResult> Update(
         Guid userId,
         Guid id,
-        FormalEducationUpdateValidator validator,
-        [FromBody] FormalEducation entity,
-        [FromServices] IRepository<FormalEducation> repository)
+        FormalEducationValidator validator,
+        [FromBody] FormalEducationDto request,
+        [FromServices] IListableRepository<FormalEducation> repository)
     {
-        if (id != entity.Id)
-        {
-            return Results.BadRequest("The route Id is not the same as the entity Id");
-        }
-
-        ValidationResult validationResult = validator.Validate(entity);
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        FormalEducation newEntity = (FormalEducation)entity.Clone();
-        newEntity.UserId = userId;
-
-        FormalEducation? result = await repository.Update(newEntity);
-        if (result is null)
+        FormalEducation? existing = await repository.ReadAsync(id);
+        if (existing is null)
         {
-            return Results.BadRequest($"Error updating the entity with the Id '{id}'.");
+            return Results.BadRequest($"The formal education entry with Id '{id}' related to the user with Id '{userId}' was not found.");
+        }
+
+        if (existing.UserId != userId)
+        {
+            return Results.BadRequest("The entry user Id does not correspond to the one read from the request.");
+        }
+
+        FormalEducation? newEntity = (FormalEducation)existing.Clone();
+        newEntity.Degree = request.Degree;
+        newEntity.Institution = request.Institution;
+        newEntity.StartDate = request.StartDate;
+        newEntity.EndDate = request.EndDate;
+        newEntity.Description = request.Description;
+
+        newEntity = await repository.UpdateAsync(newEntity);
+        if (newEntity is null)
+        {
+            return Results.InternalServerError($"Error updating the formal education entry with the Id '{id}' related to the user with Id '{userId}'..");
         }
 
         return Results.NoContent();

@@ -1,16 +1,13 @@
 ﻿using capg_hv_backend.Application.Channels.Abstractions;
 using capg_hv_backend.Application.Channels.Entities;
 using capg_hv_backend.Application.Repositories.Abstractions;
-using capg_hv_backend.Application.Repositories.Entities;
 using capg_hv_backend.Application.Validators.Internal;
 using capg_hv_backend.Domain.Entities;
 using capg_hv_backend.Endpoints.Entities;
 using Carter;
 using Carter.ModelBinding;
 using FluentValidation.Results;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace capg_hv_backend.Endpoints.Internal;
 
@@ -21,11 +18,11 @@ public sealed class UserEndpoints : ICarterModule
         RouteGroupBuilder group = app.MapGroup("api/v1/users")
             .WithTags("Users");
 
-        group.MapGet("/", GetAll)
+        group.MapGet("/", ReadAll)
             .Produces<List<User>>()
             .Produces(StatusCodes.Status500InternalServerError);
 
-        group.MapGet("{id:guid}", Get)
+        group.MapGet("{id:guid}", Read)
             .Produces<User>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
@@ -47,21 +44,14 @@ public sealed class UserEndpoints : ICarterModule
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status422UnprocessableEntity)
             .Produces(StatusCodes.Status500InternalServerError);
-
-        // Files
-        group.MapGet("{id:guid}/photo", DownloadPhoto)
-            .WithDescription("Downloads the user's profile photo")
-            .Produces<FileStreamHttpResult>()
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status500InternalServerError);
     }
 
     private async Task<IResult> Create(
-        UserAddValidator validator,
-        [FromBody] UserCreateRequestDto request,
-        [FromServices] IRepository<User> usersRepository,
-        [FromServices] IRepository<GeneralDetails> generalDetailsRepository,
-        [FromServices] IRepository<PersonalDetails> personalDetailsRepository)
+        UserValidator validator,
+        [FromBody] UserDto request,
+        [FromServices] IListableRepository<User> usersRepository,
+        [FromServices] ICrudRepository<GeneralDetails> generalDetailsRepository,
+        [FromServices] ICrudRepository<PersonalDetails> personalDetailsRepository)
     {
         // Validates request
         ValidationResult validationResult = validator.Validate(request);
@@ -73,66 +63,86 @@ public sealed class UserEndpoints : ICarterModule
         // Creates the new user
         User? newUser = new()
         {
-          FirstName = request.FirstName,
-          LastName = request.LastName,
-          EmailAddress = request.EmailAddress  
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            EmailAddress = request.EmailAddress
         };
 
-        newUser = await usersRepository.Create(newUser);
+        newUser = await usersRepository.CreateAsync(newUser);
         if (newUser is null)
         {
-            return Results.Problem("Error creating entity.", statusCode: 500);
+            return Results.InternalServerError($"Error creating user with email address '{request.EmailAddress}'.");
         }
 
-        // Creates General and Project Details
-        var generalDetails = new GeneralDetails()
+        // Creates general and project details
+        GeneralDetails? generalDetails = new()
         {
             Title = $"{newUser.FirstName} {newUser.LastName}",
             UserId = newUser.Id
         };
 
-        generalDetails = await generalDetailsRepository.Create(generalDetails);
-        if(generalDetails is null)
+        generalDetails = await generalDetailsRepository.CreateAsync(generalDetails);
+        if (generalDetails is null)
         {
-            
+            await usersRepository.DeleteAsync(newUser.Id);
+            return Results.InternalServerError($"Error creating general details for the user with email address '{newUser.EmailAddress}'.");
+        }
+
+        PersonalDetails? personalDetails = new()
+        {
+            BirthDate = request.BirthDate,
+            Nationality = request.Nationality,
+            TelephoneNumber = request.TelephoneNumber,
+            Location = request.Location,
+            UserId = newUser.Id
+        };
+
+        personalDetails = await personalDetailsRepository.CreateAsync(personalDetails);
+        if (personalDetails is null)
+        {
+            await usersRepository.DeleteAsync(newUser.Id);
+            return Results.InternalServerError($"Error creating personal details for the user with email address '{newUser.EmailAddress}'.");
         }
 
         return Results.Created($"api/v1/users/{newUser.Id}", newUser);
     }
 
     private async Task<IResult> Delete(Guid id,
-        [FromServices] IRepository<User> usersRepository,
-        [FromServices] IRepository<FileMetaData> metadataRepository,
+        [FromServices] IListableRepository<User> usersRepository,
+        [FromServices] IListableRepository<FileMetaData> metadataRepository,
         [FromServices] IChannel<FileDeleteRequestDto> channel)
     {
-        User? result = await usersRepository.Delete(id);
+        // Loads files metadata prior to user removal.
+        List<FileMetaData> files = await metadataRepository.List(id);
+
+        // Deletes user
+        User? result = await usersRepository.DeleteAsync(id);
         if (result is null)
         {
-            return Results.BadRequest($"Error deleting the entity with Id '{id}'");
+            return Results.BadRequest($"Error deleting the user with Id '{id}'.");
         }
 
-        // Sends request for files removal
-        List<FileMetaData> files = await metadataRepository.List(id);
+        // Sends request for files removal to hosted service.
         if (files.Count > 0)
         {
-            files.ForEach(async file => await channel.WriteAsync(new FileDeleteRequestDto(file.Id, file.Name)));
+            files.ForEach(async file => await channel.WriteAsync(new FileDeleteRequestDto(id, file.Id, file.Name)));
         }
 
         return Results.Accepted();
     }
 
-    private async Task<IResult> Get(Guid id, [FromServices] IRepository<User> repository)
+    private async Task<IResult> Read(Guid id, [FromServices] IListableRepository<User> repository)
     {
-        User? result = await repository.Get(id);
+        User? result = await repository.ReadAsync(id);
         if (result is null)
         {
-            return Results.BadRequest("The entity does not exist in the database.");
+            return Results.BadRequest($"The user with Id '{id}' does not exist in the database.");
         }
 
         return Results.Ok(result);
     }
 
-    private async Task<IResult> GetAll([FromServices] IRepository<User> repository)
+    private async Task<IResult> ReadAll([FromServices] IListableRepository<User> repository)
     {
         List<User> list = await repository.List();
         return Results.Ok(list);
@@ -140,62 +150,50 @@ public sealed class UserEndpoints : ICarterModule
 
     private async Task<IResult> Update(
         Guid id,
-        UserUpdateValidator validator,
-        [FromBody] User entity,
-        [FromServices] IRepository<User> repository)
+        UserValidator validator,
+        [FromBody] UserDto request,
+        [FromServices] IListableRepository<User> userRepository,
+        [FromServices] ICrudRepository<PersonalDetails> personalDetailsRepository)
     {
-        if (id != entity.Id)
-        {
-            return Results.BadRequest("The route Id is not the same as the entity Id");
-        }
-
-        ValidationResult validationResult = validator.Validate(entity);
+        ValidationResult validationResult = validator.Validate(request);
         if (!validationResult.IsValid)
         {
             return Results.UnprocessableEntity(validationResult.GetFormattedErrors());
         }
 
-        User? result = await repository.Update(entity);
-        if (result is null)
+        // Gets the entities to update.
+        User? user = await userRepository.ReadAsync(id);
+        PersonalDetails? details = await personalDetailsRepository.ReadAsync(id);
+        if (user is null || details is null)
         {
-            return Results.BadRequest($"Error updating the entity with the Id '{id}'.");
+            string missingEntry = user is null ? "user" : "details";
+            return Results.BadRequest($"The {missingEntry} does not exist in the database.");
+        }
+
+        // Updates entities
+        User? newUser = (User)user.Clone();
+        newUser.FirstName = request.FirstName;
+        newUser.LastName = request.LastName;
+        newUser.EmailAddress = request.EmailAddress;
+
+        PersonalDetails? newDetails = (PersonalDetails)details.Clone();
+        newDetails.BirthDate = request.BirthDate;
+        newDetails.Nationality = request.Nationality;
+        newDetails.TelephoneNumber = request.TelephoneNumber;
+        newDetails.Location = request.Location;
+
+        newUser = await userRepository.UpdateAsync(newUser);
+        if (newUser is null)
+        {
+            return Results.BadRequest($"Error updating the user with the Id '{id}'.");
+        }
+
+        newDetails = await personalDetailsRepository.UpdateAsync(newDetails);
+        if (newDetails is null)
+        {
+            return Results.BadRequest($"Error updating the personal details of the user with Id '{id}'.");
         }
 
         return Results.NoContent();
-    }
-
-    private async Task<IResult> DownloadPhoto(
-        Guid id,
-        [FromServices] IRepository<GeneralDetails> generalDetailsRepository,
-        [FromServices] IRepository<FileMetaData> metadataRepository,
-        [FromServices] IFilesRepository filesRepository)
-    {
-        // Validates user id
-        GeneralDetails? details = await generalDetailsRepository.Get(id);
-        if (details is null)
-        {
-            return Results.BadRequest("The user does not exist in the database.");
-        }
-
-        if(details.PhotoFileId is null)
-        {
-            return Results.BadRequest("The user does not have a profile photo.");
-        }
-
-        // Gets the metadata registry
-        FileMetaData? metadata = await metadataRepository.Get(details.PhotoFileId.Value);
-        if (metadata is null)
-        {
-            return Results.BadRequest("The photo is not registered in the database.");
-        }
-
-        // Gets the file
-        FileOperationResult<byte[]> downloaded = await filesRepository.Download(metadata.Id);
-        if (downloaded.StatusCode != HttpStatusCode.OK || downloaded.Data is null)
-        {
-            return Results.InternalServerError(downloaded.Message);
-        }
-
-        return TypedResults.File(fileStream: new MemoryStream(downloaded.Data), contentType: "application/octet-stream", fileDownloadName: metadata.Name);
     }
 }

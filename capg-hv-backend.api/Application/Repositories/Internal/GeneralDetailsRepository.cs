@@ -1,16 +1,16 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
-using capg_hv_backend.Infrastructure.Persistence.Internal;
+using capg_hv_backend.Infrastructure.Database.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
-public sealed class GeneralDetailsRepository(ApplicationDbContext context) : IRepository<GeneralDetails>
+public sealed class GeneralDetailsRepository(ApplicationDbContext context) : ICrudRepository<GeneralDetails>
 {
     private readonly ApplicationDbContext _context = context;
 
-    public async Task<GeneralDetails?> Create(GeneralDetails entity, CancellationToken token = default)
+    public async Task<GeneralDetails?> CreateAsync(GeneralDetails entity, CancellationToken token = default)
     {
         EntityEntry<GeneralDetails> result = await _context.GeneralDetails.AddAsync(entity, token);
         await _context.SaveChangesAsync(token);
@@ -18,9 +18,9 @@ public sealed class GeneralDetailsRepository(ApplicationDbContext context) : IRe
         return result?.Entity;
     }
 
-    public async Task<GeneralDetails?> Delete(Guid id, CancellationToken token = default)
+    public async Task<GeneralDetails?> DeleteAsync(Guid userId, CancellationToken token = default)
     {
-        GeneralDetails? existing = await Get(id, token);
+        GeneralDetails? existing = await ReadAsync(userId, token);
         if (existing is null)
         {
             return null;
@@ -32,9 +32,7 @@ public sealed class GeneralDetailsRepository(ApplicationDbContext context) : IRe
         return existing;
     }
 
-    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.GeneralDetails.AnyAsync(e => e.Id == id, token);
-
-    public async Task<GeneralDetails?> Get(Guid userId, CancellationToken token = default)
+    public async Task<GeneralDetails?> ReadAsync(Guid userId, CancellationToken token = default)
     {
         // Gets the user
         User? user = await _context.Users.FindAsync([userId], token);
@@ -49,11 +47,9 @@ public sealed class GeneralDetailsRepository(ApplicationDbContext context) : IRe
         return user.GeneralDetails;
     }
 
-    public async Task<List<GeneralDetails>> List(Guid? userId = null, CancellationToken token = default) => await _context.GeneralDetails.Where(i => i.UserId == userId).ToListAsync(token);
-
-    public async Task<GeneralDetails?> Update(GeneralDetails entity, CancellationToken token = default)
+    public async Task<GeneralDetails?> UpdateAsync(GeneralDetails entity, CancellationToken token = default)
     {
-        GeneralDetails? existing = await Get(entity.Id, token);
+        GeneralDetails? existing = await ReadAsync(entity.UserId, token);
         if (existing is null)
         {
             return null;

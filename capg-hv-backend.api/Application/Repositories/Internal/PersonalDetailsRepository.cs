@@ -1,16 +1,16 @@
 ﻿using capg_hv_backend.Application.Repositories.Abstractions;
 using capg_hv_backend.Domain.Entities;
-using capg_hv_backend.Infrastructure.Persistence.Internal;
+using capg_hv_backend.Infrastructure.Database.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace capg_hv_backend.Application.Repositories.Internal;
 
-public sealed class PersonalDetailsRepository(ApplicationDbContext context) : IRepository<PersonalDetails>
+public sealed class PersonalDetailsRepository(ApplicationDbContext context) : ICrudRepository<PersonalDetails>
 {
     private readonly ApplicationDbContext _context = context;
 
-    public async Task<PersonalDetails?> Create(PersonalDetails entity, CancellationToken token = default)
+    public async Task<PersonalDetails?> CreateAsync(PersonalDetails entity, CancellationToken token = default)
     {
         PersonalDetails details = (PersonalDetails)entity.Clone();
         if (details.BirthDate.Kind != DateTimeKind.Utc)
@@ -24,9 +24,9 @@ public sealed class PersonalDetailsRepository(ApplicationDbContext context) : IR
         return result?.Entity;
     }
 
-    public async Task<PersonalDetails?> Delete(Guid id, CancellationToken token = default)
+    public async Task<PersonalDetails?> DeleteAsync(Guid userId, CancellationToken token = default)
     {
-        PersonalDetails? existing = await Get(id, token);
+        PersonalDetails? existing = await ReadAsync(userId, token);
         if (existing is null)
         {
             return null;
@@ -38,15 +38,21 @@ public sealed class PersonalDetailsRepository(ApplicationDbContext context) : IR
         return existing;
     }
 
-    public async Task<bool> Exists(Guid id, CancellationToken token = default) => await _context.PersonalDetails.AnyAsync(e => e.Id == id, token);
-
-    public async Task<PersonalDetails?> Get(Guid id, CancellationToken token = default) => await _context.PersonalDetails.FindAsync([id], token);
-
-    public async Task<List<PersonalDetails>> List(Guid? userId = null, CancellationToken token = default) => await _context.PersonalDetails.Where(i => i.UserId == userId).ToListAsync(token);
-
-    public async Task<PersonalDetails?> Update(PersonalDetails entity, CancellationToken token = default)
+    public async Task<PersonalDetails?> ReadAsync(Guid userId, CancellationToken token = default)
     {
-        PersonalDetails? existing = await Get(entity.Id, token);
+        User? user = await _context.Users.FindAsync([userId], token);
+        if (user is null)
+        {
+            return null;
+        }
+
+        await _context.Entry(user).Reference(u => u.PersonalDetails).LoadAsync(token);
+        return user.PersonalDetails;
+    }
+
+    public async Task<PersonalDetails?> UpdateAsync(PersonalDetails entity, CancellationToken token = default)
+    {
+        PersonalDetails? existing = await ReadAsync(entity.UserId, token);
         if (existing is null)
         {
             return null;

@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace capg_hv_backend.Domain.Entities;
 
@@ -15,10 +17,13 @@ public sealed class FileMetaData : BaseEntity, ICloneable
     public string Name { get; set; } = null!;
 
     [Required]
-    public Guid OwnerId { get; set; }
-
-    [Required]
     public long SizeInBytes { get; set; }
+
+    [JsonIgnore]
+    public User User { get; set; } = null!;
+
+    [ForeignKey("UserId")]
+    public Guid UserId { get; set; }
 
     public object Clone()
     {
@@ -27,7 +32,7 @@ public sealed class FileMetaData : BaseEntity, ICloneable
             Id = Id,
             Name = Name,
             SizeInBytes = SizeInBytes,
-            OwnerId = OwnerId,
+            UserId = UserId,
             Md5Hash = Md5Hash,
             ModifiedAt = ModifiedAt,
         };

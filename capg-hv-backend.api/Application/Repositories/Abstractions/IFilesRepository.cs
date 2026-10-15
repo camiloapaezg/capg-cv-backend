@@ -5,17 +5,17 @@ namespace capg_hv_backend.Application.Repositories.Abstractions;
 
 public interface IFilesRepository
 {
-    Task<FileOperationResult<object>> Delete(Guid fileId, CancellationToken token = default);
+    Task<FileOperationResult<object>> DeleteAsync(Guid fileId, CancellationToken token = default);
 
-    Task<FileOperationResult<object>> DeleteFromQuarantine(Guid fileId, CancellationToken token = default);
+    Task<FileOperationResult<object>> DeleteFromQuarantineAsync(Guid fileId, CancellationToken token = default);
 
-    Task<FileOperationResult<byte[]>> Download(Guid fileId, CancellationToken token = default);
+    Task<FileOperationResult<byte[]>> DownloadAsync(Guid fileId, CancellationToken token = default);
 
-    Task<FileOperationResult<byte[]>> DownloadFromQuarantine(Guid fileId, CancellationToken token = default);
+    Task<FileOperationResult<byte[]>> DownloadFromQuarantineAsync(Guid fileId, CancellationToken token = default);
 
-    Task<FileOperationResult<GetObjectMetadataResponse>> GetMetadata(Guid fileId);
+    Task<FileOperationResult<GetObjectMetadataResponse>> GetMetadataAsync(Guid fileId, CancellationToken token = default);
 
-    Task<FileOperationResult<string>> Upload(Guid fileId, Stream fileStream, CancellationToken token = default);
+    Task<FileOperationResult<string>> UploadAsync(Guid fileId, Stream fileStream, CancellationToken token = default);
 
-    Task<FileOperationResult<string>> UploadToQuarantine(Guid fileId, Stream fileStream, CancellationToken token = default);
+    Task<FileOperationResult<string>> UploadToQuarantineAsync(Guid fileId, Stream fileStream, CancellationToken token = default);
 }

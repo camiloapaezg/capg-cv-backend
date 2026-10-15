@@ -1,4 +1,5 @@
-﻿using capg_hv_backend.Infrastructure.FilesScanner;
+﻿using capg_hv_backend.Application.Resiliency;
+using capg_hv_backend.Infrastructure.FilesScanner;
 using capg_hv_backend.Infrastructure.MessageBroker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ public class InfrastructureFixture : IAsyncLifetime
                 .ConfigureServices((context, services) =>
                 {
                     services.AddLogging()
+                    .AddResiliency()
                     .AddMessageBroker(context.Configuration)
                     .AddFilesScanner(context.Configuration);
                 });

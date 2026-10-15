@@ -9,10 +9,13 @@ public sealed class PersonalDetails : BaseEntity, ICloneable
     public DateTime BirthDate { get; set; }
 
     [MaxLength(64)]
-    public string Nationality { get; set; } = null!;
+    public string? Location { get; set; } = null!;
 
     [MaxLength(64)]
-    public string TelephoneNumber { get; set; } = null!;
+    public string? Nationality { get; set; } = null!;
+
+    [MaxLength(64)]
+    public string? TelephoneNumber { get; set; } = null!;
 
     [JsonIgnore]
     public User User { get; set; } = null!;
@@ -26,6 +29,7 @@ public sealed class PersonalDetails : BaseEntity, ICloneable
         {
             Id = Id,
             Nationality = Nationality,
+            Location = Location,
             TelephoneNumber = TelephoneNumber,
             BirthDate = BirthDate,
             UserId = UserId
