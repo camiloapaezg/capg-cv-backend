@@ -1,533 +1,213 @@
-# CAPG API
+# CAPG CV Backend API
 
-Backend API for the CAPG application. The service exposes a REST-style HTTP API for managing CV/profile data and file assets, backed by PostgreSQL, S3-compatible object storage, RabbitMQ, and an antivirus/file-scanning service.
+## Purpose
 
-> **Current status:** the repository is at version `0.0.2` (`2026-10-01`). The changelog describes this as the initial migration containing the README, changelog, and domain layer.
+The CAPG CV Backend API manages CV/resume data for users, including personal and general profile details, work experience, formal education, certification/training records, publications, and associated files such as profile photos, certificates, and work-experience attachments.
 
-## Table of contents
+## API endpoints
 
-- [Overview](#overview)
-- [Features](#features)
-- [Technology stack](#technology-stack)
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [Configuration](#configuration)
-- [Run locally](#run-locally)
-- [API](#api)
-- [File upload and scanning flow](#file-upload-and-scanning-flow)
-- [Database](#database)
-- [Testing](#testing)
-- [Docker](#docker)
-- [Resilience and middleware](#resilience-and-middleware)
-- [Project structure](#project-structure)
-- [Security notes](#security-notes)
-- [Versioning and changelog](#versioning-and-changelog)
-- [License](#license)
-
-## Overview
-
-`capg-cv-backend` is an ASP.NET Core 10 Web API implemented with Carter endpoint modules. The application is organized around application, domain, infrastructure, and endpoint concerns rather than traditional MVC controllers.
-
-The API manages a CV-oriented domain including:
-
-- Users
-- Personal details
-- General details
-- Certification and training records
-- Formal education
-- Publications
-- Work experience
-- File metadata and file content
-
-Files follow a separate processing pipeline: uploaded content is validated and placed in quarantine object storage, a RabbitMQ message is published, and a hosted service scans the content through the configured file-scanning service. Clean files are promoted to permanent storage and their metadata is persisted in PostgreSQL.
-
-## Features
-
-- ASP.NET Core `net10.0` Web API.
-- Carter-based endpoint modules and route grouping.
-- Entity Framework Core 10 with PostgreSQL via Npgsql.
-- Automatic database migration during application startup.
-- FluentValidation for create/update operations.
-- S3-compatible object storage using the AWS SDK for .NET.
-- Separate permanent and quarantine buckets for uploaded files.
-- RabbitMQ integration for asynchronous file-scanning work.
-- TCP-based antivirus/file scanning using the configured scanner host and port.
-- File signature validation for supported image/PDF files and rejection of executable/script content.
-- Image integrity validation using ImageSharp.
-- Swagger/OpenAPI in the Development environment.
-- Centralized exception handling, security headers, and resilience middleware.
-- Polly resilience pipeline with timeout, exponential retry, and circuit-breaker policies.
-- xUnit test project with Testcontainers support.
-
-## Technology stack
-
-| Technology | Version | Purpose |
-|---|---:|---|
-| .NET / ASP.NET Core | 10.0 | API runtime |
-| Carter | 10.0.0 | Endpoint modules and routing |
-| Entity Framework Core | 10.0.7 | ORM and migrations |
-| PostgreSQL / Npgsql EF provider | 10.0.1 | Relational persistence |
-| FluentValidation | 12.1.1 | Request/entity validation |
-| AWS SDK for S3 | 4.0.22.2 | S3-compatible object storage |
-| RabbitMQ.Client | 7.2.1 | Message broker integration |
-| Polly.Extensions | 8.6.6 | Resilience policies |
-| SixLabors.ImageSharp | 3.1.12 | Image validation |
-| Swashbuckle.AspNetCore | 10.1.7 | Swagger/OpenAPI |
-| xUnit | 2.9.2 | Testing |
-| Testcontainers | 4.11.0 | Containerized test dependencies |
-
-The versions above are taken from the project files in this repository.
-
-## Architecture
-
-The application is wired through three main layers:
-
-```text
-HTTP request
-    │
-    ▼
-Carter endpoints
-    │
-    ├── FluentValidation
-    │
-    ▼
-Application
-    ├── repositories
-    ├── validators
-    ├── file validation
-    └── hosted services
-    │
-    ├───────────────────────┐
-    ▼                       ▼
-Infrastructure          Domain
-    ├── PostgreSQL
-    ├── S3-compatible storage
-    ├── RabbitMQ
-    └── file scanner
-```
-
-`Program.cs` registers Application, Infrastructure, middleware, and Carter, then maps the Carter modules. PostgreSQL is configured through `DatabaseOptions`, and migrations are applied when the application starts.
-
-## Prerequisites
-
-For the full application, have the following available:
-
-- .NET 10 SDK
-- PostgreSQL
-- An S3-compatible object-storage service
-- RabbitMQ
-- The configured file-scanning/antivirus service
-- Docker, when running tests that rely on Testcontainers
-
-The application can be developed with local services or compatible containerized services such as PostgreSQL, MinIO/S3-compatible storage, RabbitMQ, and a ClamAV-compatible scanner.
-
-## Configuration
-
-The application reads configuration using named sections. The repository currently defines these configuration areas:
-
-| Section | Required values | Purpose |
-|---|---|---|
-| `DatabaseOptions` | `ConnectionString` | PostgreSQL connection |
-| `FileValidationOptions` | `MaxSizeInBytes` | Maximum accepted upload size |
-| `FilesScannerOptions` | `Hostname`, `Port` | Antivirus/file-scanning service |
-| `FileStorageOptions` | `Hostname`, `Port`, `AccessKey`, `SecretKey`, `BucketName`, `QuarantineBucketName` | S3-compatible storage |
-| `MessageBrokerOptions` | `Hostname`, `Port`, `Username`, `Password`, `Queues.FilesScanner` | RabbitMQ and scanning queue |
-
-A typical development configuration can be supplied through `appsettings.Development.json`, user secrets, or environment variables. Do not store real credentials in tracked configuration files.
-
-### Environment-variable mapping
-
-ASP.NET Core configuration maps nested JSON properties to environment variables using `__`. For example:
-
-```text
-DatabaseOptions__ConnectionString
-FileValidationOptions__MaxSizeInBytes
-FilesScannerOptions__Hostname
-FilesScannerOptions__Port
-FileStorageOptions__Hostname
-FileStorageOptions__Port
-FileStorageOptions__AccessKey
-FileStorageOptions__SecretKey
-FileStorageOptions__BucketName
-FileStorageOptions__QuarantineBucketName
-MessageBrokerOptions__Hostname
-MessageBrokerOptions__Port
-MessageBrokerOptions__Username
-MessageBrokerOptions__Password
-MessageBrokerOptions__Queues__FilesScanner
-```
-
-Keeping infrastructure credentials outside source control is recommended for both local development and production deployments.
-
-## Run locally
-
-### 1. Restore dependencies
-
-```bash
-dotnet restore capg-hv-backend.slnx
-```
-
-### 2. Configure infrastructure
-
-Provide the required configuration sections for PostgreSQL, S3-compatible storage, RabbitMQ, file scanning, and upload validation.
-
-For local development, the checked-in launch settings define:
-
-- HTTP: `http://localhost:5216`
-- HTTPS: `https://localhost:7285`
-
-The Development environment launches Swagger automatically.
-
-### 3. Build
-
-```bash
-dotnet build capg-hv-backend.slnx
-```
-
-### 4. Run the API
-
-```bash
-dotnet run --project capg-hv-backend.api/capg-hv-backend.api.csproj
-```
-
-With the HTTPS launch profile, Swagger is available at:
-
-```text
-https://localhost:7285/swagger
-```
-
-With the HTTP launch profile:
-
-```text
-http://localhost:5216/swagger
-```
-
-Swagger is enabled only when `ASPNETCORE_ENVIRONMENT` is `Development`.
-
-## API
-
-All application routes use the `/api/v1` prefix. The API currently uses Carter modules rather than MVC controllers.
+All routes below are relative to the API root shown in each group. GUID route parameters must be valid GUIDs. JSON request bodies use the DTOs and fields listed below; fields marked `?` are nullable/optional at the DTO level. Application validators may impose additional constraints.
 
 ### Users
 
-| Method | Endpoint | Purpose | Success |
-|---|---|---|---|
-| `GET` | `/api/v1/users/` | List users | `200 OK` |
-| `GET` | `/api/v1/users/{id}` | Get a user | `200 OK` |
-| `POST` | `/api/v1/users/` | Create a user | `201 Created` |
-| `PUT` | `/api/v1/users/{id}` | Update a user | `204 No Content` |
-| `DELETE` | `/api/v1/users/{id}` | Delete a user | `204 No Content` |
+**Route group:** `/api/v1/users`
+
+| Method   | Endpoint             | Input (path/body)                         | Success response                                                                  |
+| -------- | -------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
+| `GET`    | `/api/v1/users/`     | None                                      | `200 OK` — `List<User>`                                                           |
+| `GET`    | `/api/v1/users/{id}` | Path: `id` (`Guid`)                       | `200 OK` — `User`                                                                 |
+| `POST`   | `/api/v1/users/`     | JSON body: `UserDto` (see below)          | `201 Created` — created `User`; `Location` points to `/api/v1/users/{newUser.Id}` |
+| `PUT`    | `/api/v1/users/{id}` | Path: `id` (`Guid`); JSON body: `UserDto` | `204 No Content`                                                                  |
+| `DELETE` | `/api/v1/users/{id}` | Path: `id` (`Guid`)                       | `202 Accepted`; deletion of associated files is queued when files exist           |
+
+**JSON body**
+
+```json
+{
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "emailAddress": "ada@example.com",
+  "birthDate": "1815-12-10T00:00:00",
+  "location": "London",
+  "nationality": "British",
+  "telephoneNumber": "+44 0000 000000"
+}
+```
+
+Properties: `firstName` (string), `lastName` (string), `emailAddress` (string), `birthDate` (DateTime), `location` (string or null), `nationality` (string or null), `telephoneNumber` (string or null).
+
+Creating a user also creates initial `GeneralDetails` and `PersonalDetails` records. Updating a user updates the user's name/email and the associated personal details from the same `UserDto`.
 
 ### Personal details
 
-```text
-/api/v1/users/{userId}/personal/
-/api/v1/users/{userId}/personal/{id}
+**Route group:** `/api/v1/users/{userId}/personal`
+
+| Method | Endpoint                           | Input (path/body)                                        | Success response             |
+| ------ | ---------------------------------- | -------------------------------------------------------- | ---------------------------- |
+| `GET`  | `/api/v1/users/{userId}/personal/` | Path: `userId` (`Guid`)                                  | `200 OK` — `PersonalDetails` |
+| `PUT`  | `/api/v1/users/{userId}/personal/` | Path: `userId` (`Guid`); JSON body: `PersonalDetailsDto` | `204 No Content`             |
+
+**JSON body**
+
+```json
+{
+  "birthDate": "1815-12-10T00:00:00",
+  "location": "London",
+  "nationality": "British",
+  "telephoneNumber": "+44 0000 000000"
+}
 ```
 
-Supported operations:
-
-- `GET` collection
-- `GET` by ID
-- `POST`
-- `PUT`
-- `DELETE`
+Properties: `birthDate` (DateTime), `location` (string or null), `nationality` (string or null), `telephoneNumber` (string or null).
 
 ### General details
 
-```text
-/api/v1/users/{userId}/general/
-/api/v1/users/{userId}/general/{id}
+**Route group:** `/api/v1/users/{userId}/general`
+
+| Method | Endpoint                               | Input (path/body)                                          | Success response                         |
+| ------ | -------------------------------------- | ---------------------------------------------------------- | ---------------------------------------- |
+| `GET`  | `/api/v1/users/{userId}/general/`      | Path: `userId` (`Guid`)                                    | `200 OK` — `GeneralDetails`              |
+| `PUT`  | `/api/v1/users/{userId}/general/`      | Path: `userId` (`Guid`); JSON body: `GeneralDetailsDto`    | `204 No Content`                         |
+| `GET`  | `/api/v1/users/{userId}/general/photo` | Path: `userId` (`Guid`)                                    | File stream (`application/octet-stream`) |
+| `POST` | `/api/v1/users/{userId}/general/photo` | Path: `userId` (`Guid`); multipart form file field: `file` | `202 Accepted`                           |
+
+**JSON body**
+
+```json
+{
+  "title": "Software Engineer",
+  "description": "Professional profile summary",
+  "technicalSkills": "C#, TypeScript, PostgreSQL",
+  "languages": "English, German"
+}
 ```
 
-Supported operations:
+Properties: `title` (string), `description` (string or null), `technicalSkills` (string or null), `languages` (string or null).
 
-- `GET` collection
-- `GET` by ID
-- `POST`
-- `PUT`
-- `DELETE`
-
-### Certification and training
-
-```text
-/api/v1/users/{userId}/certificationtraining/
-/api/v1/users/{userId}/certificationtraining/{id}
-```
-
-Supported operations:
-
-- `GET` collection
-- `GET` by ID
-- `POST`
-- `PUT`
-- `DELETE`
-
-### Formal education
-
-```text
-/api/v1/users/{userId}/education/
-/api/v1/users/{userId}/education/{id}
-```
-
-Supported operations:
-
-- `GET` collection
-- `GET` by ID
-- `POST`
-- `PUT`
-- `DELETE`
-
-### Publications
-
-```text
-/api/v1/users/{userId}/publication/
-/api/v1/users/{userId}/publication/{id}
-```
-
-Supported operations:
-
-- `GET` collection
-- `GET` by ID
-- `POST`
-- `PUT`
-- `DELETE`
+Photo upload uses `multipart/form-data` with a file field named `file`; it does not use a JSON body.
 
 ### Work experience
 
-```text
-/api/v1/users/{userId}/experience/
-/api/v1/users/{userId}/experience/{id}
+**Route group:** `/api/v1/users/{userId}/experience`
+
+| Method   | Endpoint                                      | Input (path/body)                                                | Success response                         |
+| -------- | --------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| `GET`    | `/api/v1/users/{userId}/experience/`          | Path: `userId` (`Guid`)                                          | `200 OK` — `List<WorkExperience>`        |
+| `GET`    | `/api/v1/users/{userId}/experience/{id}`      | Path: `userId`, `id` (`Guid`)                                    | `200 OK` — `WorkExperience`              |
+| `POST`   | `/api/v1/users/{userId}/experience/`          | Path: `userId` (`Guid`); JSON body: `WorkExperienceDto`          | `201 Created` — created `WorkExperience` |
+| `PUT`    | `/api/v1/users/{userId}/experience/{id}`      | Path: `userId`, `id` (`Guid`); JSON body: `WorkExperienceDto`    | `204 No Content`                         |
+| `DELETE` | `/api/v1/users/{userId}/experience/{id}`      | Path: `userId`, `id` (`Guid`)                                    | `204 No Content`                         |
+| `GET`    | `/api/v1/users/{userId}/experience/{id}/file` | Path: `userId`, `id` (`Guid`)                                    | File stream (`application/octet-stream`) |
+| `POST`   | `/api/v1/users/{userId}/experience/{id}/file` | Path: `userId`, `id` (`Guid`); multipart form file field: `file` | `202 Accepted`                           |
+
+**JSON body**
+
+```json
+{
+  "company": "Example Ltd",
+  "jobTitle": "Software Engineer",
+  "location": "Augsburg, Germany",
+  "description": "Developed backend and frontend software",
+  "from": "2022-01-01T00:00:00",
+  "until": null,
+  "contactName": null,
+  "contactNumber": null
+}
 ```
 
-Supported operations:
+Properties: `company` (string), `jobTitle` (string), `location` (string), `description` (string), `from` (DateTime), `until` (DateTime or null), `contactName` (string or null), `contactNumber` (string or null).
 
-- `GET` collection
-- `GET` by ID
-- `POST`
-- `PUT`
-- `DELETE`
+File download requires the experience entry to exist, belong to the supplied `userId`, and have an attached file. Upload accepts `multipart/form-data` with a file field named `file`.
 
-### Files
+### Formal education
 
-```text
-/api/v1/users/{userId}/files/
-/api/v1/users/{userId}/files/{id}
+**Route group:** `/api/v1/users/{userId}/education`
+
+| Method   | Endpoint                                | Input (path/body)                                              | Success response                          |
+| -------- | --------------------------------------- | -------------------------------------------------------------- | ----------------------------------------- |
+| `GET`    | `/api/v1/users/{userId}/education/`     | Path: `userId` (`Guid`)                                        | `200 OK` — `List<FormalEducation>`        |
+| `GET`    | `/api/v1/users/{userId}/education/{id}` | Path: `userId`, `id` (`Guid`)                                  | `200 OK` — `FormalEducation`              |
+| `POST`   | `/api/v1/users/{userId}/education/`     | Path: `userId` (`Guid`); JSON body: `FormalEducationDto`       | `201 Created` — created `FormalEducation` |
+| `PUT`    | `/api/v1/users/{userId}/education/{id}` | Path: `userId`, `id` (`Guid`); JSON body: `FormalEducationDto` | `204 No Content`                          |
+| `DELETE` | `/api/v1/users/{userId}/education/{id}` | Path: `userId`, `id` (`Guid`)                                  | `204 No Content`                          |
+
+**JSON body**
+
+```json
+{
+  "degree": "MSc Computer Science",
+  "institution": "Example University",
+  "startDate": "2020-09",
+  "endDate": "2022-06",
+  "description": "Specialized in software engineering"
+}
 ```
 
-| Method | Endpoint | Purpose | Success |
-|---|---|---|---|
-| `POST` | `/api/v1/users/{userId}/files/` | Upload a file for asynchronous scanning | `202 Accepted` |
-| `GET` | `/api/v1/users/{userId}/files/{id}` | Download a stored file | `200 OK` |
-| `DELETE` | `/api/v1/users/{userId}/files/{id}` | Delete file metadata and stored content | `204 No Content` |
+Properties: `degree` (string), `institution` (string), `startDate` (string), `endDate` (string or null), `description` (string or null).
 
-The upload endpoint expects a multipart form upload with a `file` field and an optional `fileName` query parameter. The file is validated, stored in quarantine, and a message is published to the configured RabbitMQ queue for asynchronous scanning.
+### Certification and training
 
-### Validation and errors
+**Route group:** `/api/v1/users/{userId}/certificationtraining`
 
-Create/update endpoints use FluentValidation. Validation failures are returned as `422 Unprocessable Entity` for the entity-based resources. Other invalid requests can return `400 Bad Request`, while unexpected server failures are reported as `500 Internal Server Error`.
+| Method   | Endpoint                                                 | Input (path/body)                                                    | Success response                                |
+| -------- | -------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------- |
+| `GET`    | `/api/v1/users/{userId}/certificationtraining/`          | Path: `userId` (`Guid`)                                              | `200 OK` — `List<CertificationTraining>`        |
+| `GET`    | `/api/v1/users/{userId}/certificationtraining/{id}`      | Path: `userId`, `id` (`Guid`)                                        | `200 OK` — `CertificationTraining`              |
+| `POST`   | `/api/v1/users/{userId}/certificationtraining/`          | Path: `userId` (`Guid`); JSON body: `CertificationTrainingDto`       | `201 Created` — created `CertificationTraining` |
+| `PUT`    | `/api/v1/users/{userId}/certificationtraining/{id}`      | Path: `userId`, `id` (`Guid`); JSON body: `CertificationTrainingDto` | `204 No Content`                                |
+| `DELETE` | `/api/v1/users/{userId}/certificationtraining/{id}`      | Path: `userId`, `id` (`Guid`)                                        | `204 No Content`                                |
+| `GET`    | `/api/v1/users/{userId}/certificationtraining/{id}/file` | Path: `userId`, `id` (`Guid`)                                        | File stream (`application/octet-stream`)        |
+| `POST`   | `/api/v1/users/{userId}/certificationtraining/{id}/file` | Path: `userId`, `id` (`Guid`); multipart form file field: `file`     | `202 Accepted`                                  |
 
-The exact response schemas and request bodies should be treated as the source of truth in Swagger/OpenAPI because they are defined directly by the endpoint implementation and domain models.
+**JSON body**
 
-## File upload and scanning flow
-
-File handling is deliberately asynchronous:
-
-```text
-Client
-  │
-  │ POST multipart/form-data
-  ▼
-Files endpoint
-  │
-  ├── validate user
-  ├── validate size / filename / signature
-  ├── validate image integrity when applicable
-  └── store file in quarantine bucket
-          │
-          ▼
-       RabbitMQ
-       scanning queue
-          │
-          ▼
-  FilesScannerService
-          │
-          ▼
-   Antivirus scanner
-          │
-      ┌───┴────┐
-   CLEAN     REJECTED/ERROR
-      │
-      ▼
-Permanent S3 bucket
-      │
-      ▼
-File metadata in PostgreSQL
+```json
+{
+  "institution": "Example Academy",
+  "title": "Cloud Certification",
+  "finishedAt": "2025-03",
+  "certificateNumber": null
+}
 ```
 
-The current validator:
+Properties: `institution` (string), `title` (string), `finishedAt` (string), `certificateNumber` (string or null).
 
-- Rejects empty uploads.
-- Enforces `FileValidationOptions:MaxSizeInBytes`.
-- Sanitizes the uploaded filename.
-- Accepts files identified as images or PDFs by file signature.
-- Rejects executable and script signatures.
-- Validates that images can actually be decoded by ImageSharp.
+Certificate file upload uses `multipart/form-data` with a file field named `file`.
 
-The scanner communicates over TCP using the ClamAV `zINSTREAM` protocol. Files are transferred in 64 KiB chunks.
+### Publications
 
-The hosted `FilesScannerService` consumes the configured RabbitMQ queue, retrieves the file from quarantine, runs the scanner, moves clean files into permanent storage, records metadata, and removes the quarantined object. Rejected files are not promoted to permanent storage.
+**Route group:** `/api/v1/users/{userId}/publication`
 
-## Database
+| Method   | Endpoint                                  | Input (path/body)                                          | Success response                      |
+| -------- | ----------------------------------------- | ---------------------------------------------------------- | ------------------------------------- |
+| `GET`    | `/api/v1/users/{userId}/publication/`     | Path: `userId` (`Guid`)                                    | `200 OK` — `List<Publication>`        |
+| `GET`    | `/api/v1/users/{userId}/publication/{id}` | Path: `userId`, `id` (`Guid`)                              | `200 OK` — `Publication`              |
+| `POST`   | `/api/v1/users/{userId}/publication/`     | Path: `userId` (`Guid`); JSON body: `PublicationDto`       | `201 Created` — created `Publication` |
+| `PUT`    | `/api/v1/users/{userId}/publication/{id}` | Path: `userId`, `id` (`Guid`); JSON body: `PublicationDto` | `204 No Content`                      |
+| `DELETE` | `/api/v1/users/{userId}/publication/{id}` | Path: `userId`, `id` (`Guid`)                              | `204 No Content`                      |
 
-Entity Framework Core is configured to use PostgreSQL through Npgsql.
+**JSON body**
 
-The application contains DbSets for:
-
-- `User`
-- `PersonalDetails`
-- `GeneralDetails`
-- `CertificationTraining`
-- `FormalEducation`
-- `Publication`
-- `WorkExperience`
-- `FileMetaData`
-
-Database migrations are applied automatically during application startup. The startup sequence therefore expects the configured PostgreSQL instance to be reachable before the application begins serving requests.
-
-For development-time migration commands, use the API project as the startup project, for example:
-
-```bash
-dotnet ef migrations list \
-  --project capg-hv-backend.api/capg-hv-backend.api.csproj
+```json
+{
+  "title": "An Example Publication",
+  "type": "Journal",
+  "location": "Example Journal",
+  "publishedAt": "2024-01",
+  "doi": null
+}
 ```
 
-Create a migration with:
+Properties: `title` (string), `type` (string), `location` (string), `publishedAt` (string), `doi` (string or null).
 
-```bash
-dotnet ef migrations add <MigrationName> \
-  --project capg-hv-backend.api/capg-hv-backend.api.csproj
-```
+## Responses and validation
 
-## Testing
-
-The solution includes a dedicated xUnit test project:
-
-```text
-capg-hv-backend.tests/
-```
-
-Run all tests with:
-
-```bash
-dotnet test capg-hv-backend.slnx
-```
-
-The test project references:
-
-- xUnit
-- Microsoft.NET.Test.Sdk
-- Coverlet collector
-- Testcontainers
-
-If a test requires containerized infrastructure, Docker must be available to the test process.
-
-## Docker
-
-The API project contains a Dockerfile based on the official .NET 10 ASP.NET runtime and SDK images and exposes ports `8080` and `8081`.
-
-The current Dockerfile should be reviewed before using it for a clean repository-root build: its `COPY`/`WORKDIR` paths still reference a project path named `capg-hv-backend`, while the solution currently contains `capg-hv-backend.api`.
-
-This means the checked-in Docker configuration should be considered development-oriented until those paths are aligned with the current solution structure.
-
-## Resilience and middleware
-
-The application installs three custom middleware components:
-
-1. `ExceptionHandlingMiddleware` — centralizes exception handling.
-2. `SecurityHeadersMiddleware` — adds HTTP security headers.
-3. `ResilienceMiddleware` — applies the configured Polly resilience pipeline.
-
-The resilience pipeline is configured with:
-
-- 60-second timeout
-- Up to 3 retry attempts
-- Exponential backoff
-- Circuit breaker with a 50% failure ratio
-- 30-second sampling duration
-- Minimum throughput of 10 requests
-- 30-second break duration
-
-These settings are registered under the Polly resilience pipeline named `resilient-pipeline`.
-
-## Project structure
-
-```text
-capg-cv-backend/
-├── capg-hv-backend.api/
-│   ├── Application/
-│   │   ├── FilesValidator/
-│   │   ├── HostedServices/
-│   │   ├── Middlewares/
-│   │   ├── Repositories/
-│   │   └── Validators/
-│   ├── Domain/
-│   │   └── Entities/
-│   ├── Endpoints/
-│   │   ├── Entities/
-│   │   └── Internal/
-│   ├── Infrastructure/
-│   │   ├── FilesScanner/
-│   │   ├── MessageBroker/
-│   │   └── Persistence/
-│   ├── Program.cs
-│   ├── appsettings.json
-│   ├── appsettings.Development.json
-│   ├── Dockerfile
-│   └── capg-hv-backend.api.csproj
-├── capg-hv-backend.tests/
-│   ├── Resources/
-│   ├── appsettings.json
-│   └── capg-hv-backend.tests.csproj
-├── CHANGELOG.md
-├── .dockerignore
-├── .gitignore
-└── capg-hv-backend.slnx
-```
-
-The exact implementation details can be followed through the dependency-registration entry points:
-
-- `Application/DependencyInjection.cs`
-- `Infrastructure/DependencyInjection.cs`
-- `Application/Middlewares/DependencyInjection.cs`
-
-## Security notes
-
-### Do not commit infrastructure credentials
-
-The repository currently contains test configuration with credentials for PostgreSQL, S3-compatible storage, and RabbitMQ. Those values are intentionally not reproduced in this README.
-
-If any of those credentials are real or have ever been used against a live system, rotate them and replace committed secrets with environment variables, user secrets, a secret manager, or CI/CD secrets.
-
-### File safety
-
-File uploads are not immediately made public or placed directly into the permanent bucket. The current implementation first validates content and stores it in quarantine, then requests an asynchronous antivirus scan before promotion to permanent storage.
-
-This is an important part of the application's security model and should be preserved when changing the upload pipeline.
-
-## Versioning and changelog
-
-The project follows Semantic Versioning and the changelog format documented by [Keep a Changelog](https://keepachangelog.com/).
-
-See [`CHANGELOG.md`](./CHANGELOG.md) for release history.
-
-Current recorded release:
-
-```text
-0.0.1 — 2026-04-23
-Initial migration. CHANGELOG, README, and domain layer.
-```
-
-## License
-
-No license file is currently present in the repository. Unless a license is added, the repository's code should not be assumed to be available for unrestricted redistribution or modification.
+- Collection endpoints return JSON arrays of the corresponding domain entity.
+- Single-item read endpoints return the corresponding domain entity.
+- Create endpoints return `201 Created` and the created entity, except where the endpoint implementation indicates otherwise.
+- Update endpoints return `204 No Content` on success.
+- Delete endpoints for child records return `204 No Content`; deleting a user returns `202 Accepted`.
+- DTO validation failures return `422 Unprocessable Entity` with formatted validation errors.
+- Invalid or missing entities and user/entity ownership mismatches commonly return `400 Bad Request`.
+- Internal operation failures may return `500 Internal Server Error` or a problem response with the downstream file-operation status.
+- File upload endpoints accept `multipart/form-data` with a single `file` field; file downloads return a binary stream rather than JSON.
