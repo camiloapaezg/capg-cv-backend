@@ -1,87 +1,58 @@
 <mxfile host="Electron" agent="ChatGPT">
   <diagram id="domain-entities" name="Domain Entities">
-    <mxGraphModel dx="3289" dy="2159" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="940" math="0" shadow="0">
+    <mxGraphModel dx="2049" dy="2219" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;BaseEntity&lt;/b&gt;&lt;hr&gt;+ Id: Guid" vertex="1">
-          <mxGeometry height="70" width="220" x="200" y="-780" as="geometry" />
-        </mxCell>
-        <mxCell id="3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;User&lt;/b&gt;&lt;hr&gt;+ EmailAddress: string&lt;br&gt;+ FirstName: string&lt;br&gt;+ LastName: string&lt;br&gt;+ CertificationTraining: ICollection&amp;lt;CertificationTraining&amp;gt; {get}&lt;br&gt;+ Education: ICollection&amp;lt;FormalEducation&amp;gt; {get}&lt;br&gt;+ Files: ICollection&amp;lt;FileMetaData&amp;gt; {get}&lt;br&gt;+ GeneralDetails: GeneralDetails?&lt;br&gt;+ PersonalDetails: PersonalDetails?&lt;br&gt;+ Publications: ICollection&amp;lt;Publication&amp;gt; {get}&lt;br&gt;+ WorkExperience: ICollection&amp;lt;WorkExperience&amp;gt; {get}&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="220" width="370" x="190" y="-200" as="geometry" />
-        </mxCell>
-        <mxCell id="4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;PersonalDetails&lt;/b&gt;&lt;hr&gt;+ BirthDate: DateTime&lt;br&gt;+ Location: string?&lt;br&gt;+ Nationality: string?&lt;br&gt;+ TelephoneNumber: string?&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="190" width="280" x="-450" y="-740" as="geometry" />
-        </mxCell>
-        <mxCell id="5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;GeneralDetails&lt;/b&gt;&lt;hr&gt;+ Description: string?&lt;br&gt;+ Languages: string?&lt;br&gt;+ TechnicalSkills: string?&lt;br&gt;+ Title: string&lt;br&gt;+ PhotoFileId: Guid?&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="180" width="160" x="-310" y="130" as="geometry" />
-        </mxCell>
-        <mxCell id="6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;WorkExperience&lt;/b&gt;&lt;hr&gt;+ Company: string&lt;br&gt;+ ContactName: string?&lt;br&gt;+ ContactNumber: string?&lt;br&gt;+ Description: string&lt;br&gt;+ FileId: Guid?&lt;br&gt;+ From: DateTime&lt;br&gt;+ JobTitle: string&lt;br&gt;+ Location: string&lt;br&gt;+ Until: DateTime?&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="230" width="160" x="830" y="-780" as="geometry" />
-        </mxCell>
-        <mxCell id="7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;CertificationTraining&lt;/b&gt;&lt;hr&gt;+ CertificateNumber: string?&lt;br&gt;+ FileId: Guid?&lt;br&gt;+ FinishedAt: string&lt;br&gt;+ Institution: string&lt;br&gt;+ Title: string&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="180" width="180" x="1240" y="-220" as="geometry" />
-        </mxCell>
-        <mxCell id="8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;FormalEducation&lt;/b&gt;&lt;hr&gt;+ Degree: string&lt;br&gt;+ Description: string?&lt;br&gt;+ EndDate: string?&lt;br&gt;+ Institution: string&lt;br&gt;+ StartDate: string&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="180" width="150" x="1040" y="90" as="geometry" />
-        </mxCell>
-        <mxCell id="9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;Publication&lt;/b&gt;&lt;hr&gt;+ Doi: string?&lt;br&gt;+ Location: string&lt;br&gt;+ PublishedAt: string&lt;br&gt;+ Title: string&lt;br&gt;+ Type: string&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="180" width="150" x="50" y="130" as="geometry" />
-        </mxCell>
-        <mxCell id="10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;fontSize=12;" value="&lt;b&gt;FileMetaData&lt;/b&gt;&lt;hr&gt;+ Md5Hash: string&lt;br&gt;+ ModifiedAt: DateTime&lt;br&gt;+ Name: string&lt;br&gt;+ SizeInBytes: long&lt;br&gt;+ User: User&lt;br&gt;+ UserId: Guid&lt;br&gt;+ Clone(): object" vertex="1">
-          <mxGeometry height="170" width="170" x="590" y="140" as="geometry" />
-        </mxCell>
-        <mxCell id="20" edge="1" parent="1" source="3" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="Op8URxLtS_hCroCzmjWG-15" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="9">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="21" edge="1" parent="1" source="4" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="Op8URxLtS_hCroCzmjWG-16" connectable="0" parent="Op8URxLtS_hCroCzmjWG-15" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="1 — 0..*" vertex="1">
+          <mxGeometry relative="1" x="-0.0041" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#dae8fc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;User&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ EmailAddress: string&lt;br&gt;+ FirstName: string&lt;br&gt;+ LastName: string" vertex="1">
+          <mxGeometry height="150" width="300" x="550" y="-370" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#d5e8d4;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;PersonalDetails&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ BirthDate: DateTime&lt;br&gt;+ Nationality: string&lt;br&gt;+ TelephoneNumber: string" vertex="1">
+          <mxGeometry height="120" width="205" x="375" y="-720" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#d5e8d4;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;GeneralDetails&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ Description: string?&lt;br&gt;+ Languages: string?&lt;br&gt;+ TechnicalSkills: string?&lt;br&gt;+ Title: string" vertex="1">
+          <mxGeometry height="130" width="220" x="820" y="-730" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#fff2cc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;WorkExperience&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ Company: string&lt;br&gt;+ Location: string&lt;br&gt;+ ContactName: string?&lt;br&gt;+ ContactNumber: string?&lt;br&gt;+ Description: string&lt;br&gt;+ From: DateTime&lt;br&gt;+ JobTitle: string&lt;br&gt;+ Until: DateTime?" vertex="1">
+          <mxGeometry height="180" width="190" x="140" y="-502.5" as="geometry" />
+        </mxCell>
+        <mxCell id="6" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#fff2cc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;CertificationTraining&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ CertificateNumber: string?&lt;br&gt;+ FinishedAt: string&lt;br&gt;+ Institution: string&lt;br&gt;+ Title: string" vertex="1">
+          <mxGeometry height="120" width="220" x="880" y="-70" as="geometry" />
+        </mxCell>
+        <mxCell id="7" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#fff2cc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;FormalEducation&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ Degree: string&lt;br&gt;+ Description: string?&lt;br&gt;+ EndDate: string?&lt;br&gt;+ School: string&lt;br&gt;+ StartDate: string" vertex="1">
+          <mxGeometry height="135" width="180" x="980" y="-480" as="geometry" />
+        </mxCell>
+        <mxCell id="8" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#f8cecc;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;Publication&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ Doi: string?&lt;br&gt;+ Location: string&lt;br&gt;+ PublishedAt: string&lt;br&gt;+ Title: string&lt;br&gt;+ Type: string" vertex="1">
+          <mxGeometry height="135" width="180" x="350" y="-70" as="geometry" />
+        </mxCell>
+        <mxCell id="9" parent="1" style="swimlane;html=1;startSize=30;horizontal=1;rounded=0;whiteSpace=wrap;fillColor=#e1d5e7;swimlaneFillColor=#ffffff;strokeColor=#666666;fontStyle=1;align=center;verticalAlign=top;spacingTop=6;collapsible=0;" value="&lt;b&gt;FileMetaData&lt;/b&gt;&lt;hr&gt;+ Id: Guid&lt;br&gt;+ Md5Hash: string&lt;br&gt;+ ModifiedAt: DateTime&lt;br&gt;+ Name: string&lt;br&gt;+ SizeInBytes: long" vertex="1">
+          <mxGeometry height="120" width="180" x="610" y="-20" as="geometry" />
+        </mxCell>
+        <mxCell id="10" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" target="3" value="1 — 0..1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="22" edge="1" parent="1" source="5" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="11" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" target="4" value="1 — 0..1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="23" edge="1" parent="1" source="6" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="12" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" target="5" value="1 — 0..*">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="24" edge="1" parent="1" source="7" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="13" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" target="6" value="1 — 0..*">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="25" edge="1" parent="1" source="8" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="14" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" target="7" value="1 — 0..*">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="26" edge="1" parent="1" source="9" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
+        <mxCell id="15" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" target="8" value="1 — 0..*">
           <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="27" edge="1" parent="1" source="10" style="endArrow=block;endFill=0;endSize=14;html=1;rounded=0;strokeWidth=1.3;dashed=1;" target="2" value="implements ICloneable">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="28" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="4" value="personal details  (1 User : 0..1 PersonalDetails)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
-        </mxCell>
-        <mxCell id="29" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="5" value="general details  (1 User : 0..1 GeneralDetails)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
-        </mxCell>
-        <mxCell id="30" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="6" value="work experience  (1 User : 0..* WorkExperience)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
-        </mxCell>
-        <mxCell id="31" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="7" value="certification/training  (1 User : 0..* CertificationTraining)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
-        </mxCell>
-        <mxCell id="32" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="8" value="education  (1 User : 0..* FormalEducation)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
-        </mxCell>
-        <mxCell id="33" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="9" value="publications  (1 User : 0..* Publication)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
-        </mxCell>
-        <mxCell id="34" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;startArrow=none;endArrow=none;strokeWidth=1.3;" target="10" value="files  (1 User : 0..* FileMetaData)">
-          <mxGeometry relative="1" as="geometry" />
-          <mxPoint as="offset" />
         </mxCell>
       </root>
     </mxGraphModel>
