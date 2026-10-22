@@ -1,0 +1,17 @@
+[postgres2]
+enabled = true
+hostname = "database"
+port = 5432
+username = "camiloapaezg"
+password = "c4m1l0Ap43zG"
+database = "capg-hv-db"
+sslmode = "disable"
+createtable = """
+  CREATE TABLE IF NOT EXISTS "%s" (
+    dirhash   BIGINT,
+    name      VARCHAR(65535),
+    directory VARCHAR(65535),
+    meta      bytea,
+    PRIMARY KEY (dirhash, name)
+  );
+"""
