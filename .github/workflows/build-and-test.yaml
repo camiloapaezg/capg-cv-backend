@@ -45,10 +45,10 @@ jobs:
       - name: Run Automatic Tests
         run: |
           dotnet test --no-build --configuration Release \
-            --logger "trx;LogFileName=test-results.trx" \
-            --collect:"XPlat Code Coverage"
+            --report-trx --report-trx-filename "test-results.trx" \
+            --coverage --coverage-output-format cobertura   
 
-      - name: Publish test results
+      - name: Publish Test Results
         uses: dorny/test-reporter@v3
         if:  ${{ !cancelled() }} 
         with:
