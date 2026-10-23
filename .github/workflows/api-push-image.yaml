@@ -37,7 +37,7 @@ jobs:
         with:
           push: true
           context: ./capg-backend-api
-          file: Dockerfile
+          file: ./Dockerfile
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}

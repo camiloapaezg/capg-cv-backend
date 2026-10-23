@@ -30,13 +30,13 @@ public class MessageBrokerShould(InfrastructureFixture fixture)
             Assert.NotNull(received);
             Assert.Equal(sent.Id, received.Id);
             tcs.SetResult(true);
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Sends the message
         using (IMessageBrokerClient sender = _fixture.TestHost.Services.GetRequiredService<IMessageBrokerClient>())
         {
             Assert.NotNull(sender);
-            await sender.SendMessageAsync(queueName, JsonSerializer.SerializeToUtf8Bytes(sent));
+            await sender.SendMessageAsync(queueName, JsonSerializer.SerializeToUtf8Bytes(sent), TestContext.Current.CancellationToken);
         }
 
         // Awaits for the event to be triggered

@@ -9,13 +9,17 @@ namespace capg_hv_backend.tests.UnitTests.Application;
 public class FileMetaDataRepositoryShould(ApplicationFixture fixture)
 {
     private readonly ApplicationFixture _fixture = fixture;
+
     private FileMetaData? _metadata;
+
     private User? _user;
+
     [Fact]
     public async Task CreateEntity()
     {
         // Prepares.
         await CreateTestEntities();
+        Assert.NotNull(_user);
         Assert.NotNull(_metadata);
         IListableRepository<FileMetaData> sut = _fixture.TestHost.Services.GetRequiredService<IListableRepository<FileMetaData>>();
         Assert.NotNull(sut);
