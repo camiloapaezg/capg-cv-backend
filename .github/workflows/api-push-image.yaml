@@ -37,8 +37,9 @@ jobs:
 
       - name: Debug workspace
         run: |
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          ls -la "$GITHUB_WORKSPACE"
+          ls -la ./capg-backend-api/
+          echo "---"
+          head -5 ./capg-backend-api/Dockerfile
 
       - name: Build and Push
         uses: docker/build-push-action@v7
