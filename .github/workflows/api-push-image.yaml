@@ -10,12 +10,11 @@ env:
 
 jobs:
   build-and-test:
+    name: Build & Run Tests
     runs-on: ubuntu-latest
-    steps:
-      - name: Build & Run Tests
-        uses: ./.github/workflows/build-and-test.yaml@master
-        with:
-          dotnet-version: '10.0.x'
+    uses: ./.github/workflows/build-and-test.yaml
+    with:
+      dotnet-version: '10.0.x'
 
   push-image:
     name: Push Image to Docker Hub
