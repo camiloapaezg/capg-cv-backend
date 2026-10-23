@@ -29,8 +29,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # - name: Checkout GitHub Code
-      #   uses: actions/checkout@v7
+      - name: Checkout GitHub Code
+        uses: actions/checkout@v7
 
       - name: Debug workspace
         run: |
