@@ -43,4 +43,15 @@ jobs:
         run: dotnet build --no-restore --configuration Release
       
       - name: Run Automatic Tests
-        run: dotnet test --no-build --configuration Release
+        run: |
+          dotnet test --no-build --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage"
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v3
+        if:  ${{ !cancelled() }} 
+        with:
+          name: .NET Test Results
+          path: '**/*.trx'
+          reporter: dotnet-trx

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- GitHub actions to build, test and push API image to Docker Hub. 
+- GitHub actions to build, test with coverage, and push API image to Docker Hub. 
 
 ## [0.0.4] - 2026.10.15
 
