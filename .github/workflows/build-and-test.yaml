@@ -1,0 +1,46 @@
+name: Build & Test
+
+on:
+  workflow-call:
+    inputs:
+      dotnet-version:
+        required: true
+        type: string
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub Code
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        id: cache-nuget
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Check Cache Status
+        run: |
+          if [ "${{ steps.cache-nuget.outputs.cache-hit }}" == "true" ]; then
+            echo "Cache FOUND - Cached dependencies will be used"
+          else
+            echo "Cache NOT FOUND - NuGet packages will be cached after install"
+          fi
+                  
+      - name: Restore Dependencies
+        run: dotnet restore 
+      
+      - name: Build Solution
+        run: dotnet build --no-restore --configuration Release
+      
+      - name: Run Automatic Tests
+        run: dotnet test --no-build --configuration Release
