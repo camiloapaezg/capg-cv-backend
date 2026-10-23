@@ -6,8 +6,9 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Run Tests
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/build-and-test.yaml@master
-    with:
-      dotnet-version: '10.0.x'
+    steps:
+      - name: Build & Run Tests
+        uses: ./.github/workflows/build-and-test.yaml@master
+        with:
+          dotnet-version: '10.0.x'
