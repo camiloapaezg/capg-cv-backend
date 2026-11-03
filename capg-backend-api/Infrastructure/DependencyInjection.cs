@@ -1,6 +1,7 @@
 ﻿using capg_hv_backend.Infrastructure.Database;
 using capg_hv_backend.Infrastructure.FilesScanner;
 using capg_hv_backend.Infrastructure.FileStorage;
+using capg_hv_backend.Infrastructure.IdentityProvider;
 using capg_hv_backend.Infrastructure.MessageBroker;
 
 namespace capg_hv_backend.Infrastructure;
@@ -12,15 +13,17 @@ public static class DependencyInjection
         services.AddDatabase(configuration)
             .AddFileStorage(configuration)
             .AddFilesScanner(configuration)
-            .AddMessageBroker(configuration);
+            .AddMessageBroker(configuration)
+            .AddIdentityProvider(configuration);
 
         return services;
     }
 
-    public static IHost UseInfrastructure(this IHost host)
+    public static WebApplication UseInfrastructure(this WebApplication app)
     {
-        host.InitializeDatabase();
+        app.UseIdentityProvider();
+        app.InitializeDatabase();
 
-        return host;
+        return app;
     }
 }

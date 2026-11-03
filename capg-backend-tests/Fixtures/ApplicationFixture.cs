@@ -59,10 +59,25 @@ public class ApplicationFixture : IAsyncLifetime
         TestHost.InitializeDatabase();
     }
 
-    private static INetwork CreateNetwork() => new NetworkBuilder()
-            .WithName("app-fixture-net")
-            .WithCleanUp(true)
-            .Build();
+    private static IContainer BuildDatabase(INetwork network) => new ContainerBuilder("postgres:latest")
+        .WithName("database")
+        .WithNetwork(network)
+        .WithPortBinding(5432, false)
+        .WithEnvironment("POSTGRES_USER", "camiloapaezg")
+        .WithEnvironment("POSTGRES_PASSWORD", "c4m1l0Ap43zG")
+        .WithEnvironment("POSTGRES_DB", "capg-hv-db")
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("database system is ready to accept connection"))
+        .Build();
+
+    private static IContainer BuildFileStorage(INetwork network) => new ContainerBuilder("chrislusf/seaweedfs:4.21")
+        .WithName("blob")
+        .WithNetwork(network)
+        .WithPortBinding(8333, false)
+        .WithBindMount(Path.Combine(Directory.GetCurrentDirectory(), "Resources/Blob/s3.json"), "/etc/seaweedfs/s3.json", AccessMode.ReadOnly)
+        .WithBindMount(Path.Combine(Directory.GetCurrentDirectory(), "Resources/Blob/filer.toml"), "/etc/seaweedfs/filer.toml", AccessMode.ReadOnly)
+        .WithCommand("server -s3 -dir=/data -s3.config=/etc/seaweedfs/s3.json")
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Start Seaweed S3 API Server"))
+        .Build();
 
     private static IHost CreateHost()
     {
@@ -83,23 +98,8 @@ public class ApplicationFixture : IAsyncLifetime
         return builder.Build();
     }
 
-    private static IContainer BuildDatabase(INetwork network) => new ContainerBuilder("postgres:latest")
-        .WithName("database")
-        .WithNetwork(network)
-        .WithPortBinding(5432, false)
-        .WithEnvironment("POSTGRES_USER", "camiloapaezg")
-        .WithEnvironment("POSTGRES_PASSWORD", "c4m1l0Ap43zG")
-        .WithEnvironment("POSTGRES_DB", "capg-hv-db")
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("database system is ready to accept connection"))
-        .Build();
-
-    private static IContainer BuildFileStorage(INetwork network) => new ContainerBuilder("chrislusf/seaweedfs:4.21")
-        .WithName("blob")
-        .WithNetwork(network)
-        .WithPortBinding(8333, false)
-        .WithBindMount(Path.Combine(Directory.GetCurrentDirectory(), "Resources/Blob/s3.json"), "/etc/seaweedfs/s3.json", AccessMode.ReadOnly)
-        .WithBindMount(Path.Combine(Directory.GetCurrentDirectory(), "Resources/Blob/filer.toml"), "/etc/seaweedfs/filer.toml", AccessMode.ReadOnly)
-        .WithCommand("server -s3 -dir=/data -s3.config=/etc/seaweedfs/s3.json")
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Start Seaweed S3 API Server"))
-        .Build();
+    private static INetwork CreateNetwork() => new NetworkBuilder()
+                        .WithName("app-fixture-net")
+            .WithCleanUp(true)
+            .Build();
 }
