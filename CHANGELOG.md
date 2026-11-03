@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2026.11.03
+
+### Security
+
+- Endpoints are now secured via token authentication (Bearer + JWT). Identity provider options (endpoint, client identifier) must be set via `appsettings.json` file.
+
 ## [0.0.5] - 2026.10.23
 
 ### Added
@@ -57,7 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial migration. CHANGELOG, README, and domain layer.
 
-[0.0.5]: https://github.com/camiloapaezg/capg-cv-backend
+[0.0.6]: https://github.com/camiloapaezg/capg-cv-backend
+[0.0.5]: https://github.com/camiloapaezg/capg-cv-backend/commit/9cf79073b6bbb9c84e7b1c1159504401b076e0f1
 [0.0.4]: https://github.com/camiloapaezg/capg-cv-backend/commit/8b27a2470a289ba686a48fcbff7705c5475199ff
 [0.0.3]: https://github.com/camiloapaezg/capg-cv-backend/commit/08ad6db6f4ce4ba2d86e7b64b311116ba1907974
 [0.0.2]: https://github.com/camiloapaezg/capg-cv-backend/commit/401bf78f3ce1fea21dd30fe7b5762e70d5b599a2

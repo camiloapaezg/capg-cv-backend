@@ -14,6 +14,7 @@ public sealed class FormalEducationEndpoints : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/education")
+            .RequireAuthorization()
             .WithTags("Formal Education");
 
         group.MapGet("/", GetAll)

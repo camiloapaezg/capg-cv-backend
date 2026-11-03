@@ -14,6 +14,7 @@ public sealed class PublicationEndpoints : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/publication")
+            .RequireAuthorization()
             .WithTags("Publications");
 
         group.MapGet("/", ReadAll)

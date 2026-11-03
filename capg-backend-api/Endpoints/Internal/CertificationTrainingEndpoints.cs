@@ -17,6 +17,7 @@ public sealed class CertificationTrainingEndpoints : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/certificationtraining")
+            .RequireAuthorization()
             .WithTags("Certification/Training");
 
         group.MapGet("/", ReadAll)

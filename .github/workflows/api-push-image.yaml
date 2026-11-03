@@ -6,14 +6,15 @@ on:
 
 env:
   IMAGE_NAME: capg-api
-  IMAGE_VERSION: '0.0.5'
+  IMAGE_VERSION: '0.0.6'
+  DOTNET_VERSION: '10.0.x'
 
 jobs:
   build-and-test:
     name: Build & Run Tests
     uses: ./.github/workflows/build-and-test.yaml
     with:
-      dotnet-version: '10.0.x'
+      dotnet-version: ${{ env.DOTNET_VERSION }}
 
   push-image:
     name: Push Image to Docker Hub

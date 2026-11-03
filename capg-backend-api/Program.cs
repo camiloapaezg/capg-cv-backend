@@ -10,7 +10,8 @@ builder.Services.AddEndpointsApiExplorer()
     .AddResiliency()
     .AddInfrastructure(builder.Configuration)
     .AddApplication(builder.Configuration)
-    .AddEndpoints();
+    .AddEndpoints()
+    .AddHealthChecks();
 
 WebApplication app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -23,4 +24,5 @@ app.UseCustomMiddleware();
 app.UseInfrastructure();
 app.UseHttpsRedirection();
 app.UseEndpoints();
+app.MapHealthChecks("/health");
 app.Run();

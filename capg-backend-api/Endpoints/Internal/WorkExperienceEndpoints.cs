@@ -17,6 +17,7 @@ public sealed class WorkExperienceEndpoints : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("api/v1/users/{userId:guid}/experience")
+            .RequireAuthorization()
             .WithTags("Work Experience");
 
         group.MapGet("/", ReadAll)

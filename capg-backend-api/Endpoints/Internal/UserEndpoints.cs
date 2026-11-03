@@ -16,6 +16,7 @@ public sealed class UserEndpoints : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("api/v1/users")
+            .RequireAuthorization()
             .WithTags("Users");
 
         group.MapGet("/", ReadAll)
